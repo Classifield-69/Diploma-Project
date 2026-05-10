@@ -32,7 +32,7 @@ try:
     conn = mysql.connector.connect(**db_config)
     
     if conn.is_connected():
-        server_info = conn.get_server_info
+        server_info = conn.server_info
         print(f"✓ Връзката е УСПЕШНА!")
         print(f"  MySQL версия: {server_info}")
         
