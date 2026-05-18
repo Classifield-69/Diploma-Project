@@ -1,3 +1,17 @@
+# Чувствителни данни
 .env
+# macOS
 .DS_Store
+# Python виртуална среда
 venv/
+# Python кеш
+__pycache__/
+*.pyc
+*.pyo
+# IDE-специфични файлове
+.vscode/
+.idea/
+# Логове
+*.log
+# Database backup файлове
+*.sql.bak
