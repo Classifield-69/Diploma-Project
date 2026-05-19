@@ -15,3 +15,5 @@ __pycache__/
 *.log
 # Database backup файлове
 *.sql.bak
+# Временни файлове с токени / тестови данни
+token.txt
