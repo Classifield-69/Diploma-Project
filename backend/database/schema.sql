@@ -113,7 +113,7 @@ CREATE TABLE IF NOT EXISTS reviews (
     user_id             INT UNSIGNED NOT NULL,
     movie_id            INT UNSIGNED NOT NULL,
     text                TEXT NOT NULL,
-    true_sentiment      DECIMAL(5, 2) NOT NULL,
+    true_sentiment      DECIMAL(5, 2) DEFAULT NULL,
     lstm_prediction     DECIMAL(5, 2) DEFAULT NULL,
     bilstm_prediction   DECIMAL(5, 2) DEFAULT NULL,
     created_at          TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
@@ -129,7 +129,8 @@ CREATE TABLE IF NOT EXISTS reviews (
     
     -- Проверки за валидност на sentiment стойностите (0-100)
     CONSTRAINT chk_true_sentiment 
-        CHECK (true_sentiment >= 0 AND true_sentiment <= 100),
+    CHECK (true_sentiment IS NULL OR 
+           (true_sentiment >= 0 AND true_sentiment <= 100)),
     CONSTRAINT chk_lstm_prediction 
         CHECK (lstm_prediction IS NULL OR 
                (lstm_prediction >= 0 AND lstm_prediction <= 100)),
