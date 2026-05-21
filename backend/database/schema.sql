@@ -129,7 +129,7 @@ CREATE TABLE IF NOT EXISTS reviews (
     
     -- Проверки за валидност на sentiment стойностите (0-100)
     CONSTRAINT chk_true_sentiment 
-    CHECK (true_sentiment IS NULL OR 
+        CHECK (true_sentiment IS NULL OR 
            (true_sentiment >= 0 AND true_sentiment <= 100)),
     CONSTRAINT chk_lstm_prediction 
         CHECK (lstm_prediction IS NULL OR 
