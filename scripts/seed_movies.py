@@ -1,14 +1,14 @@
 """
 Seed скрипт за филми
-Етап 3: Записване на един филм в базата
+Етап 4: Цикъл за всичките 17 филма
 
-Този скрипт извиква OpenAI за един филм ("The Godfather"),
-после записва данните в базата с правилна нормализация
-и избягване на дубликати.
+Този скрипт извиква OpenAI за всеки филм от списъка и
+записва данните в базата с правилна нормализация.
 """
 
 import os
 import json
+import time
 from pathlib import Path
 from dotenv import load_dotenv
 from openai import OpenAI
@@ -16,7 +16,32 @@ import mysql.connector
 
 
 # ============================================================
-# 1. Зареждане на .env файла
+# 1. Списък с филмите за seed-ване
+# ============================================================
+# Всеки запис е tuple: (заглавие за OpenAI, име на файла за постер)
+MOVIES = [
+    ("Avengers: Endgame", "avengers-endgame.webp"),
+    ("Braveheart", "braveheart.webp"),
+    ("Joker (2019)", "joker-2019.webp"),
+    ("Oppenheimer (2023)", "oppenheimer.webp"),
+    ("Senna (2010 documentary)", "senna.webp"),
+    ("The Conjuring", "the-conjuring.webp"),
+    ("The Dark Knight", "the-dark-knight.webp"),
+    ("The Devil Wears Prada 2", "the-devil-wears-prada-2.webp"),
+    ("The Godfather", "the-godfather.webp"),
+    ("The Lion King (1994)", "the-lion-king-1994.webp"),
+    ("The Lord of the Rings: The Fellowship of the Ring", "the-lord-of-the-rings-the-fellowship-of-the-ring.webp"),
+    ("The Lord of the Rings: The Return of the King", "the-lord-of-the-rings-the-return-of-the-king.webp"),
+    ("The Lord of the Rings: The Two Towers", "the-lord-of-the-rings-the-two-towers.webp"),
+    ("The Matrix", "the-matrix.webp"),
+    ("The Terminator", "the-terminator.webp"),
+    ("The Wolf of Wall Street", "the-wolf-of-wall-street.webp"),
+    ("Top Gun (1986)", "top-gun.webp"),
+]
+
+
+# ============================================================
+# 2. Зареждане на .env файла
 # ============================================================
 project_root = Path(__file__).resolve().parent.parent
 env_path = project_root / ".env"
@@ -29,7 +54,7 @@ load_dotenv(env_path)
 
 
 # ============================================================
-# 2. Инициализация на OpenAI клиента
+# 3. Инициализация на OpenAI клиента
 # ============================================================
 openai_key = os.getenv("OPENAI_API_KEY")
 
@@ -41,14 +66,14 @@ client = OpenAI(api_key=openai_key)
 
 
 # ============================================================
-# 3. JSON схема за филма (както в Етап 2)
+# 4. JSON схема за филма
 # ============================================================
 movie_schema = {
     "type": "object",
     "properties": {
         "title": {
             "type": "string",
-            "description": "Точното заглавие на филма на английски"
+            "description": "Точното заглавие на филма на английски, без годината"
         },
         "year": {
             "type": "integer",
@@ -75,11 +100,12 @@ movie_schema = {
 
 
 # ============================================================
-# 4. Функция за извикване на OpenAI
+# 5. Функция за извикване на OpenAI
 # ============================================================
-def fetch_movie_metadata(movie_name: str) -> dict:
+def fetch_movie_metadata(movie_name: str) -> tuple[dict, int]:
     """
     Извиква OpenAI и връща метаданни за филма като Python dict.
+    Връща (movie_data, total_tokens).
     """
     response = client.chat.completions.create(
         model="gpt-4o-mini",
@@ -107,18 +133,25 @@ def fetch_movie_metadata(movie_name: str) -> dict:
         }
     )
     
-    return json.loads(response.choices[0].message.content)
+    movie_data = json.loads(response.choices[0].message.content)
+    return movie_data, response.usage.total_tokens
 
 
 # ============================================================
-# 5. Функции за работа с базата данни
+# 6. Функции за работа с базата данни
 # ============================================================
+
+def movie_exists(cursor, title: str, year: int) -> bool:
+    """Проверява дали филмът вече съществува в базата."""
+    cursor.execute(
+        "SELECT id FROM movies WHERE title = %s AND year = %s",
+        (title, year)
+    )
+    return cursor.fetchone() is not None
+
 
 def get_or_create_movie(cursor, title: str, year: int, director: str, poster_url: str) -> tuple[int, bool]:
-    """
-    Проверява дали филмът вече съществува.
-    Връща (movie_id, created), където created е True ако е създаден сега.
-    """
+    """Връща (movie_id, created)."""
     cursor.execute(
         "SELECT id FROM movies WHERE title = %s AND year = %s",
         (title, year)
@@ -126,10 +159,8 @@ def get_or_create_movie(cursor, title: str, year: int, director: str, poster_url
     result = cursor.fetchone()
     
     if result:
-        # Филмът вече съществува
         return result[0], False
     
-    # Създаваме нов филм
     cursor.execute(
         "INSERT INTO movies (title, year, director, poster_url) VALUES (%s, %s, %s, %s)",
         (title, year, director, poster_url)
@@ -137,62 +168,32 @@ def get_or_create_movie(cursor, title: str, year: int, director: str, poster_url
     return cursor.lastrowid, True
 
 
-def get_or_create_genre(cursor, name: str) -> int:
-    """
-    Проверява дали жанрът съществува. Ако не - създава го.
-    Връща id-то.
-    """
+def get_or_create_genre(cursor, name: str) -> tuple[int, bool]:
+    """Връща (genre_id, created)."""
     cursor.execute("SELECT id FROM genres WHERE name = %s", (name,))
     result = cursor.fetchone()
     
     if result:
-        return result[0]
+        return result[0], False
     
     cursor.execute("INSERT INTO genres (name) VALUES (%s)", (name,))
-    return cursor.lastrowid
+    return cursor.lastrowid, True
 
 
-def get_or_create_actor(cursor, name: str) -> int:
-    """
-    Проверява дали актьорът съществува. Ако не - създава го.
-    Връща id-то.
-    """
+def get_or_create_actor(cursor, name: str) -> tuple[int, bool]:
+    """Връща (actor_id, created)."""
     cursor.execute("SELECT id FROM actors WHERE name = %s", (name,))
     result = cursor.fetchone()
     
     if result:
-        return result[0]
+        return result[0], False
     
     cursor.execute("INSERT INTO actors (name) VALUES (%s)", (name,))
-    return cursor.lastrowid
-
-
-def link_movie_genre(cursor, movie_id: int, genre_id: int) -> None:
-    """
-    Свързва филм с жанр в movie_genres таблицата.
-    INSERT IGNORE се справя с потенциални дубликати в join таблицата.
-    """
-    cursor.execute(
-        "INSERT IGNORE INTO movie_genres (movie_id, genre_id) VALUES (%s, %s)",
-        (movie_id, genre_id)
-    )
-
-
-def link_movie_actor(cursor, movie_id: int, actor_id: int) -> None:
-    """
-    Свързва филм с актьор в movie_actors таблицата.
-    """
-    cursor.execute(
-        "INSERT IGNORE INTO movie_actors (movie_id, actor_id) VALUES (%s, %s)",
-        (movie_id, actor_id)
-    )
+    return cursor.lastrowid, True
 
 
 def save_movie_to_db(conn, movie_data: dict, poster_filename: str) -> dict:
-    """
-    Записва филм в базата с всички връзки. Всичко в една транзакция.
-    Връща статистика за това какво е създадено.
-    """
+    """Записва филм в базата с всички връзки. Връща статистика."""
     cursor = conn.cursor()
     poster_url = f"/img/posters/{poster_filename}"
     
@@ -215,33 +216,28 @@ def save_movie_to_db(conn, movie_data: dict, poster_filename: str) -> dict:
         
         # 2. Жанрове
         for genre_name in movie_data["genres"]:
-            # Проверка дали жанрът съществуваше преди
-            cursor.execute("SELECT id FROM genres WHERE name = %s", (genre_name,))
-            existed = cursor.fetchone() is not None
-            
-            genre_id = get_or_create_genre(cursor, genre_name)
-            link_movie_genre(cursor, movie_id, genre_id)
-            
-            if not existed:
+            genre_id, created = get_or_create_genre(cursor, genre_name)
+            if created:
                 stats["genres_created"] += 1
+            cursor.execute(
+                "INSERT IGNORE INTO movie_genres (movie_id, genre_id) VALUES (%s, %s)",
+                (movie_id, genre_id)
+            )
         
         # 3. Актьори
         for actor_name in movie_data["actors"]:
-            cursor.execute("SELECT id FROM actors WHERE name = %s", (actor_name,))
-            existed = cursor.fetchone() is not None
-            
-            actor_id = get_or_create_actor(cursor, actor_name)
-            link_movie_actor(cursor, movie_id, actor_id)
-            
-            if not existed:
+            actor_id, created = get_or_create_actor(cursor, actor_name)
+            if created:
                 stats["actors_created"] += 1
+            cursor.execute(
+                "INSERT IGNORE INTO movie_actors (movie_id, actor_id) VALUES (%s, %s)",
+                (movie_id, actor_id)
+            )
         
-        # Ако стигнахме дотук - всичко е ОК, commit
         conn.commit()
         return stats
         
     except Exception as e:
-        # При грешка - rollback
         conn.rollback()
         raise e
     finally:
@@ -249,10 +245,9 @@ def save_movie_to_db(conn, movie_data: dict, poster_filename: str) -> dict:
 
 
 # ============================================================
-# 6. Главна логика
+# 7. Главна логика - цикъл през всички филми
 # ============================================================
 def main():
-    # Връзка с базата
     db_config = {
         "host": os.getenv("DB_HOST"),
         "port": int(os.getenv("DB_PORT", 3306)),
@@ -261,63 +256,105 @@ def main():
         "database": os.getenv("DB_NAME"),
     }
     
-    print("=" * 60)
-    print("🎬 Seed скрипт - Етап 3: Записване на един филм")
-    print("=" * 60)
+    print("=" * 70)
+    print(f"🎬 Seed скрипт - Етап 4: Зареждане на {len(MOVIES)} филма")
+    print("=" * 70)
     
-    # Тестов филм
-    movie_name = "The Godfather"
-    poster_filename = "the-godfather.webp"
-    
-    # 1. Извикваме OpenAI
-    print(f"\n⏳ Извиквам OpenAI за: {movie_name}")
-    movie_data = fetch_movie_metadata(movie_name)
-    print(f"✅ Получени данни за: {movie_data['title']} ({movie_data['year']})")
-    
-    # 2. Свързваме се с базата
-    print(f"\n🔌 Свързване с базата...")
+    # Свързване с базата
     conn = mysql.connector.connect(**db_config)
-    print(f"✅ Връзка установена")
     
-    try:
-        # 3. Записваме филма
-        print(f"\n💾 Записване в базата...")
-        stats = save_movie_to_db(conn, movie_data, poster_filename)
-        
-        # 4. Показваме резултата
-        print("\n" + "=" * 60)
-        print("📊 Резултат:")
-        print("=" * 60)
-        
-        if stats["movie_created"]:
-            print(f"✅ Филм създаден: {movie_data['title']}")
-        else:
-            print(f"ℹ️  Филмът вече съществуваше: {movie_data['title']}")
-        
-        print(f"📁 Нови жанрове:  {stats['genres_created']} / {len(movie_data['genres'])}")
-        print(f"⭐ Нови актьори:  {stats['actors_created']} / {len(movie_data['actors'])}")
-        
-        # 5. Показваме общата статистика на базата
-        cursor = conn.cursor()
-        cursor.execute("SELECT COUNT(*) FROM movies")
-        total_movies = cursor.fetchone()[0]
-        cursor.execute("SELECT COUNT(*) FROM genres")
-        total_genres = cursor.fetchone()[0]
-        cursor.execute("SELECT COUNT(*) FROM actors")
-        total_actors = cursor.fetchone()[0]
-        cursor.close()
-        
-        print(f"\n📈 Общо в базата:")
-        print(f"   🎬 Филми:    {total_movies}")
-        print(f"   🎭 Жанрове:  {total_genres}")
-        print(f"   ⭐ Актьори:  {total_actors}")
-        
-    finally:
-        conn.close()
+    # Глобална статистика
+    total_stats = {
+        "processed": 0,
+        "movies_created": 0,
+        "movies_skipped": 0,
+        "movies_failed": 0,
+        "genres_created": 0,
+        "actors_created": 0,
+        "total_tokens": 0,
+        "total_cost": 0.0,
+    }
     
-    print("\n" + "=" * 60)
-    print("🎉 Етап 3 завърши успешно!")
-    print("=" * 60)
+    start_time = time.time()
+    
+    # Цикъл през всички филми
+    for index, (movie_name, poster_filename) in enumerate(MOVIES, start=1):
+        print(f"\n[{index}/{len(MOVIES)}] 🎬 {movie_name}")
+        
+        try:
+            # Извикване на OpenAI
+            print(f"   ⏳ Извиквам OpenAI...")
+            movie_data, tokens_used = fetch_movie_metadata(movie_name)
+            total_stats["total_tokens"] += tokens_used
+            
+            # Изчисляване на разхода
+            cost = tokens_used * 0.150 / 1_000_000  # приблизително
+            total_stats["total_cost"] += cost
+            
+            print(f"   📋 {movie_data['title']} ({movie_data['year']}) - {movie_data['director']}")
+            
+            # Записване в базата
+            stats = save_movie_to_db(conn, movie_data, poster_filename)
+            
+            if stats["movie_created"]:
+                total_stats["movies_created"] += 1
+                print(f"   ✅ Записан в базата (нови: {stats['genres_created']} жанра, {stats['actors_created']} актьора)")
+            else:
+                total_stats["movies_skipped"] += 1
+                print(f"   ℹ️  Вече съществуваше (пропуснат)")
+            
+            total_stats["genres_created"] += stats["genres_created"]
+            total_stats["actors_created"] += stats["actors_created"]
+            total_stats["processed"] += 1
+            
+        except Exception as e:
+            total_stats["movies_failed"] += 1
+            print(f"   ❌ ГРЕШКА: {e}")
+            continue  # продължаваме със следващия филм
+    
+    # Затваряне на връзката
+    conn.close()
+    
+    elapsed_time = time.time() - start_time
+    
+    # ============================================================
+    # Финална статистика
+    # ============================================================
+    print("\n" + "=" * 70)
+    print("📊 ФИНАЛНА СТАТИСТИКА")
+    print("=" * 70)
+    print(f"⏱️  Време за изпълнение: {elapsed_time:.1f} секунди")
+    print(f"\n🎬 Филми:")
+    print(f"   ✅ Създадени:    {total_stats['movies_created']}")
+    print(f"   ℹ️  Пропуснати:   {total_stats['movies_skipped']} (вече съществуваха)")
+    print(f"   ❌ Неуспешни:    {total_stats['movies_failed']}")
+    print(f"\n📁 Нови записи в базата:")
+    print(f"   🎭 Жанрове:  {total_stats['genres_created']}")
+    print(f"   ⭐ Актьори:  {total_stats['actors_created']}")
+    print(f"\n💰 OpenAI разход:")
+    print(f"   📊 Tokens:   {total_stats['total_tokens']:,}")
+    print(f"   💵 Цена:     ${total_stats['total_cost']:.4f}")
+    
+    # Финална проверка на базата
+    conn = mysql.connector.connect(**db_config)
+    cursor = conn.cursor()
+    cursor.execute("SELECT COUNT(*) FROM movies")
+    total_movies = cursor.fetchone()[0]
+    cursor.execute("SELECT COUNT(*) FROM genres")
+    total_genres = cursor.fetchone()[0]
+    cursor.execute("SELECT COUNT(*) FROM actors")
+    total_actors = cursor.fetchone()[0]
+    cursor.close()
+    conn.close()
+    
+    print(f"\n📈 Общо в базата:")
+    print(f"   🎬 Филми:    {total_movies}")
+    print(f"   🎭 Жанрове:  {total_genres}")
+    print(f"   ⭐ Актьори:  {total_actors}")
+    
+    print("\n" + "=" * 70)
+    print("🎉 Seed скриптът завърши!")
+    print("=" * 70)
 
 
 if __name__ == "__main__":
