@@ -18,13 +18,14 @@ from flask_jwt_extended import JWTManager
 import config
 from routes.health import health_bp
 from routes.auth import auth_bp
+from routes.movies import movies_bp
 
 
 # ============================================================
 # Инициализация на Flask приложението
 # ============================================================
 app = Flask(__name__)
-app.config["JSON_AS_ASCII"] = False  # позволява кирилица в JSON отговорите
+app.json.ensure_ascii = False  # позволява кирилица в JSON отговорите
 
 # Валидираме конфигурацията при стартиране
 config.validate_config()
@@ -53,6 +54,7 @@ jwt = JWTManager(app)
 # Тук ги "закачаме" към главното приложение.
 app.register_blueprint(health_bp)
 app.register_blueprint(auth_bp)
+app.register_blueprint(movies_bp)
 
 
 # ============================================================
