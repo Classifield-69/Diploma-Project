@@ -19,6 +19,7 @@ import config
 from routes.health import health_bp
 from routes.auth import auth_bp
 from routes.movies import movies_bp
+from routes.reviews import reviews_bp
 
 
 # ============================================================
@@ -55,6 +56,7 @@ jwt = JWTManager(app)
 app.register_blueprint(health_bp)
 app.register_blueprint(auth_bp)
 app.register_blueprint(movies_bp)
+app.register_blueprint(reviews_bp)
 
 
 # ============================================================
