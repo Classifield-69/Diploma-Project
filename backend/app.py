@@ -25,7 +25,11 @@ from routes.reviews import reviews_bp
 # ============================================================
 # Инициализация на Flask приложението
 # ============================================================
-app = Flask(__name__)
+app = Flask(
+    __name__,
+    static_folder="../frontend",
+    static_url_path="/static"
+)
 app.json.ensure_ascii = False  # позволява кирилица в JSON отговорите
 
 # Валидираме конфигурацията при стартиране
