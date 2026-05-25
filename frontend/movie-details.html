@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="bg">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Детайли за филм</title>
+
+    <!-- api.js първо (дефинира функциите), reviews.js след това (ги ползва) -->
+    <script src="/static/js/api.js" defer></script>
+    <script src="/static/js/reviews.js" defer></script>
+</head>
+<body>
+    <header>
+        <!--
+            Връзка обратно към списъка. Обикновен <a> – браузърът ще
+            направи нормална навигация, която Flask route /
+            ще обслужи с index.html.
+        -->
+        <a href="/">← Назад към всички филми</a>
+    </header>
+
+    <main>
+        <!-- Статус съобщение (зареждане / грешка) -->
+        <p id="status">Зареждане...</p>
+
+        <!--
+            Контейнер за детайлите на филма.
+            reviews.js ще го попълни динамично след fetch.
+        -->
+        <section id="movie-info"></section>
+
+        <!-- Заглавие за секцията с ревюта -->
+        <h2 id="reviews-heading" style="display: none;">Ревюта</h2>
+
+        <!-- Контейнер за ревютата -->
+        <section id="reviews-list"></section>
+    </main>
+</body>
+</html>

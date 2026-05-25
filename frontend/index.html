@@ -2,27 +2,35 @@
 <html lang="bg">
 <head>
     <meta charset="UTF-8">
-    <title>Тест на Flask static сервирането</title>
-    <style>
-        body {
-            font-family: -apple-system, sans-serif;
-            padding: 40px;
-            background: #1a1a1a;
-            color: white;
-        }
-        img {
-            max-width: 300px;
-            border-radius: 8px;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.5);
-        }
-        .success {
-            color: #4ade80;
-        }
-    </style>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Филмови ревюта</title>
+
+    <!--
+        Двата JS файла се зареждат в правилния ред:
+        1. api.js първо – дефинира fetchMovies(), staticUrl()
+        2. main.js след това – ползва тези функции
+
+        defer = браузърът чака HTML-ът да се парсне, после изпълнява JS-а.
+        Това позволява <script> в <head>, без да блокираме рендерирането.
+    -->
+    <script src="/static/js/api.js" defer></script>
+    <script src="/static/js/main.js" defer></script>
 </head>
 <body>
-    <h1>🎬 Тест на Flask сервирането</h1>
-    <p class="success">Ако виждаш постера долу — Flask сервира статичните файлове правилно.</p>
-    <img src="/static/img/posters/oppenheimer.webp" alt="Oppenheimer">
+    <header>
+        <h1>🎬 Филмови ревюта</h1>
+        <p>Система за анализ на филмови ревюта с невронни мрежи</p>
+    </header>
+
+    <main>
+        <!-- Статус съобщение (зареждане / грешка / брой филми) -->
+        <p id="status">Инициализация...</p>
+
+        <!--
+            Тук main.js ще инжектира картите за филмите.
+            Контейнерът е празен в HTML-а – пълни се динамично.
+        -->
+        <section id="movies-grid"></section>
+    </main>
 </body>
 </html>

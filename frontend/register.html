@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="bg">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Регистрация</title>
+
+    <script src="/static/js/api.js" defer></script>
+    <script src="/static/js/auth.js" defer></script>
+</head>
+<body>
+    <header>
+        <a href="/">← Назад към филмите</a>
+    </header>
+
+    <main>
+        <h1>Регистрация</h1>
+
+        <form id="register-form">
+            <div>
+                <label for="username">Потребителско име:</label>
+                <input
+                    type="text"
+                    id="username"
+                    name="username"
+                    required
+                    minlength="3"
+                    maxlength="50"
+                    pattern="[a-zA-Z0-9._-]+"
+                    autocomplete="username"
+                >
+                <!--
+                    pattern атрибутът прави браузъра да валидира че input-ът
+                    съдържа само разрешените символи. Това е същата проверка
+                    като в backend-а (is_valid_username) – дублираме я тук
+                    за да дадем веднага feedback на потребителя.
+                -->
+                <small>3-50 символа. Букви, цифри, точки, тирета и долни черти.</small>
+            </div>
+
+            <div>
+                <label for="email">Email:</label>
+                <input
+                    type="email"
+                    id="email"
+                    name="email"
+                    required
+                    autocomplete="email"
+                >
+            </div>
+
+            <div>
+                <label for="password">Парола:</label>
+                <input
+                    type="password"
+                    id="password"
+                    name="password"
+                    required
+                    minlength="8"
+                    autocomplete="new-password"
+                >
+                <!--
+                    autocomplete="new-password" подсказва на password manager-ите
+                    "това е нова парола, предложи силна" – различно от
+                    "current-password" което е за login форми.
+                -->
+                <small>Поне 8 символа, поне една буква и една цифра.</small>
+            </div>
+
+            <button type="submit">Регистрирай се</button>
+        </form>
+
+        <p id="status"></p>
+
+        <p>
+            Вече имаш акаунт? <a href="/login">Влез</a>
+        </p>
+    </main>
+</body>
+</html>
