@@ -17,3 +17,6 @@ __pycache__/
 *.sql.bak
 # Временни файлове с токени / тестови данни
 token.txt
+# ML data and models
+backend/ml/data/
+backend/ml/models/
