@@ -20,3 +20,4 @@ token.txt
 # ML data and models
 backend/ml/data/
 backend/ml/models/
+backend/ml/notebooks/
