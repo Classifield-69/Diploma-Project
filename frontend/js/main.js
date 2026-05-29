@@ -41,26 +41,17 @@ function renderMovieCard(movie) {
  */
 async function loadMovies() {
     const gridElement = document.getElementById("movies-grid");
-    const statusElement = document.getElementById("status");
 
     try {
-        statusElement.textContent = "Зареждане на филмите...";
-
         const data = await fetchMovies();
-
-        // Генерираме HTML за всички филми и го слагаме в grid-а.
-        // .map() + .join("") е стандартен pattern за рендериране на масиви.
         gridElement.innerHTML = data.movies.map(renderMovieCard).join("");
-
-        statusElement.textContent = `Заредени ${data.count} филма.`;
     } catch (error) {
-        // Ако нещо се обърка – показваме грешката, не "тиха" авария
+        // Логваме грешката в конзолата за debug
         console.error("Грешка при зареждане на филмите:", error);
-        statusElement.textContent = `Грешка: ${error.message}`;
-        statusElement.style.color = "red";
+        // Показваме съобщение в самия grid вместо в отделен status елемент
+        gridElement.innerHTML = `<p style="color: red;">Грешка при зареждане: ${error.message}</p>`;
     }
 }
-
 
 // Изпълняваме loadMovies() след като DOM-ът се зареди.
 // DOMContentLoaded гарантира че #movies-grid вече съществува.

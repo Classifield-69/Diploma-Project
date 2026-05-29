@@ -14,18 +14,18 @@
         Това позволява <script> в <head>, без да блокираме рендерирането.
     -->
     <script src="/static/js/api.js" defer></script>
+    <script src="/static/js/header.js" defer></script>
     <script src="/static/js/main.js" defer></script>
 </head>
 <body>
+    <div id="site-header"></div>
+
     <header>
         <h1>🎬 Филмови ревюта</h1>
         <p>Система за анализ на филмови ревюта с невронни мрежи</p>
     </header>
 
     <main>
-        <!-- Статус съобщение (зареждане / грешка / брой филми) -->
-        <p id="status">Инициализация...</p>
-
         <!--
             Тук main.js ще инжектира картите за филмите.
             Контейнерът е празен в HTML-а – пълни се динамично.

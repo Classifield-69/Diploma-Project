@@ -29,6 +29,19 @@ function getMovieIdFromUrl() {
     return Number.isNaN(id) ? null : id;
 }
 
+/**
+ * Форматира ML оценка от backend-а в четим вид.
+ *
+ * @param {number|null} value – оценката (1.0-5.0) или null ако не е анализирано
+ * @returns {string} – "4.56 / 5.0" или "Все още не е анализирано"
+ */
+function formatRating(value) {
+    if (value === null || value === undefined) {
+        return "Все още не е анализирано";
+    }
+    return `${value.toFixed(2)} / 5.0`;
+}
+
 
 /**
  * Рендерира детайлите на филма (постер, заглавие, актьори, и т.н.)
@@ -42,6 +55,24 @@ function renderMovieInfo(movie) {
     const actors = movie.actors.join(", ");
     const reviewsCount = movie.stats.reviews_count;
 
+    // Средни ML оценки (или съобщение че не са анализирани)
+    const lstmAvg = formatRating(movie.stats.avg_lstm_prediction);
+    const bilstmAvg = formatRating(movie.stats.avg_bilstm_prediction);
+
+    // Analyze бутон — показва се САМО на admin user-и.
+    // analysis.js закача click handler чрез event delegation.
+    const user = getCurrentUser();
+    const isAdmin = user && user.role === "admin";
+
+    const analyzeSection = isAdmin
+        ? `
+            <div class="analyze-section">
+                <button id="analyze-btn" data-movie-id="${movie.id}">Analyze</button>
+                <p id="analyze-status"></p>
+            </div>
+        `
+        : "";
+
     return `
         <img
             src="${posterUrl}"
@@ -54,10 +85,16 @@ function renderMovieInfo(movie) {
             <p><strong>Актьори:</strong> ${actors}</p>
             <p><strong>Жанрове:</strong> ${genres}</p>
             <p><strong>Брой ревюта:</strong> ${reviewsCount}</p>
+
+            <div class="movie-predictions">
+                <p><strong>Средна LSTM оценка:</strong> ${lstmAvg}</p>
+                <p><strong>Средна BiLSTM оценка:</strong> ${bilstmAvg}</p>
+            </div>
+
+            ${analyzeSection}
         </div>
     `;
 }
-
 
 /**
  * Форматира ISO datetime низ в по-четим вид.
@@ -87,10 +124,22 @@ function formatDate(isoString) {
  */
 function renderReview(review) {
     const date = formatDate(review.created_at);
-    // textContent-style escape за да не позволим HTML injection –
-    // потребителски текст не трябва да се вкарва директно в innerHTML.
-    // Тук използваме textContent на временен елемент.
     const safeText = escapeHtml(review.text);
+
+    // ML оценки на ревюто — или "не е анализирано" ако са NULL.
+    // Проверяваме И двете полета — ако някое е NULL, не показваме оценки.
+    const hasPredictions =
+        review.lstm_prediction !== null && review.bilstm_prediction !== null;
+
+    const predictionsHtml = hasPredictions
+        ? `<p class="review-predictions">
+               LSTM: ${review.lstm_prediction.toFixed(2)} / 5.0
+               |
+               BiLSTM: ${review.bilstm_prediction.toFixed(2)} / 5.0
+           </p>`
+        : `<p class="review-predictions review-predictions-empty">
+               Все още не е анализирано
+           </p>`;
 
     return `
         <article class="review">
@@ -99,10 +148,10 @@ function renderReview(review) {
                 <time class="review-date">${date}</time>
             </header>
             <p class="review-text">${safeText}</p>
+            ${predictionsHtml}
         </article>
     `;
 }
-
 
 /**
  * Защитава срещу HTML/XSS injection в потребителски текст.

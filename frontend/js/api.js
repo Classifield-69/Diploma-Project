@@ -100,7 +100,24 @@ async function fetchMovieReviews(movieId) {
     return apiRequest(`/api/movies/${movieId}/reviews`);
 }
 
-
+/**
+ * Пуска ML анализ върху ревютата на филм. Admin-only endpoint.
+ *
+ * Анализират се само ревютата с NULL предсказания. Backend-ът връща
+ * статистика колко ревюта реално са обработени.
+ *
+ * ВАЖНО: Първото извикване след startup на сървъра отнема 5-10 сек
+ * заради зареждане на TensorFlow моделите. Следващите са бързи.
+ *
+ * @param {number} movieId
+ * @returns {Promise<object>} {status, message, newly_analyzed_count, total_reviews, ...}
+ * @throws {Error} 401 (липсва JWT) | 403 (не е admin) | 404 (няма филм)
+ */
+async function analyzeMovie(movieId) {
+    return apiRequest(`/api/movies/${movieId}/analyze`, {
+        method: "POST",
+    });
+}
 
 // ============================================================
 // Authentication функции

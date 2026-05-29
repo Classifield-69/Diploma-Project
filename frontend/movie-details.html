@@ -7,16 +7,13 @@
 
     <!-- api.js първо (дефинира функциите), reviews.js след това (ги ползва) -->
     <script src="/static/js/api.js" defer></script>
+    <script src="/static/js/header.js" defer></script>
     <script src="/static/js/reviews.js" defer></script>
+    <script src="/static/js/analysis.js" defer></script>
 </head>
 <body>
     <header>
-        <!--
-            Връзка обратно към списъка. Обикновен <a> – браузърът ще
-            направи нормална навигация, която Flask route /
-            ще обслужи с index.html.
-        -->
-        <a href="/">← Назад към всички филми</a>
+        <div id="site-header"></div>
     </header>
 
     <main>
