@@ -21,6 +21,7 @@ from routes.auth import auth_bp
 from routes.movies import movies_bp
 from routes.reviews import reviews_bp
 from routes.pages import pages_bp
+from routes.analysis import analysis_bp
 
 
 # ============================================================
@@ -63,6 +64,7 @@ app.register_blueprint(auth_bp)
 app.register_blueprint(movies_bp)
 app.register_blueprint(reviews_bp)
 app.register_blueprint(pages_bp)
+app.register_blueprint(analysis_bp)
 
 
 # ============================================================

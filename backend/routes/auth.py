@@ -17,6 +17,7 @@ from flask import Blueprint, request, jsonify
 from flask_jwt_extended import create_access_token, jwt_required, get_jwt_identity, get_jwt
 from mysql.connector import Error, IntegrityError
 from database.connection import get_connection
+from functools import wraps
 
 
 # ============================================================
@@ -377,3 +378,40 @@ def get_current_user():
             "created_at": user["created_at"].isoformat() if user["created_at"] else None
         }
     }), 200
+
+
+# ============================================================
+# Декоратор: admin_required
+# ============================================================
+def admin_required(fn):
+    """
+    Декоратор за endpoint-и, които изискват admin role.
+    
+    ВАЖНО: Трябва да се ползва ЗАЕДНО с @jwt_required() и редът има значение:
+        @jwt_required()    ← първо валидира JWT-то
+        @admin_required    ← после чете role от него
+    
+    Ако подреждането е обратно, @admin_required ще опита да чете JWT, който
+    още не е валидиран, и ще гръмне.
+    
+    Пример за ползване:
+        @some_bp.route("/admin-only", methods=["POST"])
+        @jwt_required()
+        @admin_required
+        def admin_endpoint():
+            ...
+    
+    Връща:
+    - 403 Forbidden: ако user-ът не е admin
+    - Иначе изпълнява оригиналната функция
+    """
+    @wraps(fn)
+    def wrapper(*args, **kwargs):
+        claims = get_jwt()
+        if claims.get("role") != "admin":
+            return jsonify({
+                "status": "error",
+                "message": "Достъпът е разрешен само за администратори"
+            }), 403
+        return fn(*args, **kwargs)
+    return wrapper
