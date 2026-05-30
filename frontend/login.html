@@ -3,60 +3,89 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Вход</title>
-
+    <title>FilmSight — Вход</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;500&family=DM+Sans:wght@400;500&display=swap" rel="stylesheet">
+    <!-- Общи стилове (nav, footer, fonts) -->
+    <link rel="stylesheet" href="/static/css/style.css">
+    <!-- Стилове за login и register -->
+    <link rel="stylesheet" href="/static/css/auth.css">
     <script src="/static/js/api.js" defer></script>
-    <script src="/static/js/header.js" defer></script>
     <script src="/static/js/auth.js" defer></script>
 </head>
 <body>
-    <header>
-        <div id="site-header"></div>
+
+    <!-- ── HEADER ── -->
+    <header class="site-header">
+        <nav class="nav">
+            <a href="/" class="nav-logo">FilmSight</a>
+            <a href="/" class="nav-link">Начало</a>
+            <div class="nav-right">
+                <a href="/register" class="nav-btn nav-btn--outline">Регистрация</a>
+                <a href="/login" class="nav-btn nav-btn--outline">Вход</a>
+            </div>
+        </nav>
+        <div class="nav-tagline">Филмово AI списание</div>
     </header>
 
-    <main>
-        <h1>Вход в системата</h1>
+    <!-- ── MAIN ── -->
+    <main class="main-content auth-main">
+        <div class="auth-card">
 
-        <!--
-            Form с id за лесно намиране от JavaScript.
-            ВАЖНО: НЯМА action или method – submit-ът се обработва от JS.
-            Защо все пак <form>, а не <div>? Защото:
-            - Enter в input полето автоматично submit-ва формата
-            - Браузърите имат accessibility поддръжка за форми
-            - Password manager-ите разпознават структурата
-        -->
-        <form id="login-form">
-            <div>
-                <label for="email">Email:</label>
-                <input
-                    type="email"
-                    id="email"
-                    name="email"
-                    required
-                    autocomplete="email"
-                >
+            <div class="auth-card-header">
+                <div class="auth-logo">FilmSight</div>
+                <p class="auth-subtitle">Влез в своя акаунт</p>
             </div>
 
-            <div>
-                <label for="password">Парола:</label>
-                <input
-                    type="password"
-                    id="password"
-                    name="password"
-                    required
-                    autocomplete="current-password"
-                >
-            </div>
+            <!--
+                Няма action или method – submit-ът се обработва от auth.js.
+                <form> вместо <div> заради Enter, accessibility и password managers.
+            -->
+            <form id="login-form" class="auth-form" novalidate>
+                <div class="form-group">
+                    <label class="form-label" for="email">Имейл</label>
+                    <input
+                        class="form-input"
+                        type="email"
+                        id="email"
+                        name="email"
+                        placeholder="example@mail.com"
+                        required
+                        autocomplete="email"
+                    >
+                </div>
 
-            <button type="submit">Влез</button>
-        </form>
+                <div class="form-group">
+                    <label class="form-label" for="password">Парола</label>
+                    <input
+                        class="form-input"
+                        type="password"
+                        id="password"
+                        name="password"
+                        placeholder="••••••••"
+                        required
+                        autocomplete="current-password"
+                    >
+                </div>
 
-        <!-- Място за грешки/успех – auth.js ще го попълни -->
-        <p id="status"></p>
+                <!-- auth.js попълва статус съобщението -->
+                <p id="status" class="auth-status"></p>
 
-        <p>
-            Нямаш акаунт? <a href="/register">Регистрирай се</a>
-        </p>
+                <button type="submit" class="auth-btn">Вход</button>
+            </form>
+
+            <p class="auth-link">
+                Нямаш акаунт? <a href="/register">Регистрирай се</a>
+            </p>
+
+        </div>
     </main>
+
+    <!-- ── FOOTER ── -->
+    <footer class="site-footer">
+        <span>© 2026 FilmSight · Всички права запазени</span>
+    </footer>
+
 </body>
 </html>

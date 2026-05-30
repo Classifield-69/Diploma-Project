@@ -3,34 +3,54 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Детайли за филм</title>
-
-    <!-- api.js първо (дефинира функциите), reviews.js след това (ги ползва) -->
+    <title>FilmSight</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;500&family=DM+Sans:wght@400;500&display=swap" rel="stylesheet">
+    <!-- Общи стилове (header, footer, nav) -->
+    <link rel="stylesheet" href="/static/css/style.css">
+    <!-- Стилове специфични за страницата с детайли на филм -->
+    <link rel="stylesheet" href="/static/css/movie-details.css">
     <script src="/static/js/api.js" defer></script>
-    <script src="/static/js/header.js" defer></script>
     <script src="/static/js/reviews.js" defer></script>
     <script src="/static/js/analysis.js" defer></script>
 </head>
 <body>
-    <header>
-        <div id="site-header"></div>
+
+    <!-- ── HEADER (същият като index.html) ── -->
+    <header class="site-header">
+        <nav class="nav">
+            <a href="/" class="nav-logo">FilmSight</a>
+            <a href="/" class="nav-link">Начало</a>
+            <div class="nav-right">
+                <a href="/register" class="nav-btn nav-btn--outline">Регистрация</a>
+                <a href="/login" class="nav-btn nav-btn--outline">Вход</a>
+            </div>
+        </nav>
+        <div class="nav-tagline">Филмово AI списание</div>
     </header>
 
-    <main>
-        <!-- Статус съобщение (зареждане / грешка) -->
-        <p id="status">Зареждане...</p>
+    <!-- ── MAIN ── -->
+    <main class="main-content">
 
-        <!--
-            Контейнер за детайлите на филма.
-            reviews.js ще го попълни динамично след fetch.
-        -->
-        <section id="movie-info"></section>
+        <!-- Статус съобщение (зареждане / грешка) — скрива се след успех -->
+        <p id="status" class="status-msg">Зареждане...</p>
 
-        <!-- Заглавие за секцията с ревюта -->
-        <h2 id="reviews-heading" style="display: none;">Ревюта</h2>
+        <!-- ── FILM HERO: постер вляво, инфо вдясно ── -->
+        <section id="movie-info" class="film-hero"></section>
 
-        <!-- Контейнер за ревютата -->
-        <section id="reviews-list"></section>
+        <!-- ── REVIEWS ── -->
+        <div id="reviews-heading" class="section-header" style="display: none;">
+            <!-- reviews.js попълва текста динамично -->
+        </div>
+        <section id="reviews-list" class="reviews-list"></section>
+
     </main>
+
+    <!-- ── FOOTER ── -->
+    <footer class="site-footer">
+        <span>© 2026 FilmSight · Всички права запазени</span>
+    </footer>
+
 </body>
 </html>

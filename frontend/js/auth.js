@@ -1,66 +1,74 @@
 /**
  * Логика за login и register страниците.
- *
- * Засега обработва само login. Когато създадем register.html,
- * ще добавим в същия файл и register функционалност (същата структура).
- *
- * Защо двете в един файл? Защото споделят логика – обработка на форма,
- * показване на грешки, редирект след успех. DRY принципът.
+ * Двете форми са в един файл защото споделят структура (DRY принцип).
+ * Зависи от api.js (login, register, isLoggedIn функциите).
  */
 
+
+/**
+ * Показва статус съобщение в #status елемента.
+ * Добавя CSS клас за оцветяване вместо inline style.
+ *
+ * @param {string} text    – съобщението
+ * @param {'success'|'error'|''} type – типа (определя цвета)
+ */
+function setStatus(text, type = "") {
+    const statusEl = document.getElementById("status");
+    if (!statusEl) return;
+
+    statusEl.textContent = text;
+    statusEl.className = "auth-status";          // reset
+    if (type) statusEl.classList.add(type);      // добавяме success или error
+}
+
+
+// ============================================================
+// LOGIN
+// ============================================================
 
 /**
  * Обработва submit на login формата.
  *
- * @param {Event} event – submit event-ът от формата
+ * @param {Event} event – submit event-ът
  */
 async function handleLoginSubmit(event) {
-    // event.preventDefault() спира браузъра от default submit
-    // (който щеше да зареди страницата отново с form data в URL-а).
-    // Вместо това ние правим fetch заявката сами.
     event.preventDefault();
 
-    const emailInput = document.getElementById("email");
+    const emailInput    = document.getElementById("email");
     const passwordInput = document.getElementById("password");
-    const submitButton = event.target.querySelector("button[type='submit']");
-    const statusEl = document.getElementById("status");
+    const submitButton  = event.target.querySelector("button[type='submit']");
 
-    const email = emailInput.value.trim();
+    const email    = emailInput.value.trim();
     const password = passwordInput.value;
 
-    // Изключваме бутона за да не може потребителят да цъка многократно
-    // (което би пуснало множество заявки)
     submitButton.disabled = true;
-    statusEl.textContent = "Влизане...";
-    statusEl.style.color = "";  // reset цвят от предишна грешка
+    setStatus("Влизане...", "");
 
     try {
         const user = await login(email, password);
 
-        statusEl.textContent = `Успешен вход! Здравей, ${user.username}.`;
-        statusEl.style.color = "green";
+        setStatus(`Успешен вход! Здравей, ${user.username}.`, "success");
 
-        // Малка пауза за да види потребителят съобщението, после редирект.
-        // setTimeout е по-добре от мигновен redirect – дава feedback.
+        // Кратка пауза за да види потребителят съобщението, после редирект
         setTimeout(() => {
             window.location.href = "/";
         }, 800);
+
     } catch (error) {
         console.error("Login грешка:", error);
-        statusEl.textContent = error.message || "Възникна грешка при входа.";
-        statusEl.style.color = "red";
-        submitButton.disabled = false;  // позволяваме нов опит
+        setStatus(error.message || "Възникна грешка при входа.", "error");
+        submitButton.disabled = false;
     }
 }
 
-
 /**
- * Главна функция за login страницата – инициализира формата.
+ * Инициализира login страницата.
  */
 function initLoginPage() {
     const form = document.getElementById("login-form");
-    if (!form) return;  // не сме на login страницата – нищо не правим
+    if (!form) return;  // не сме на login страницата
 
+    // Ако вече сме логнати — редирект към начало
     if (isLoggedIn()) {
         window.location.href = "/";
         return;
@@ -71,7 +79,7 @@ function initLoginPage() {
 
 
 // ============================================================
-// Register функционалност
+// REGISTER
 // ============================================================
 
 /**
@@ -83,44 +91,40 @@ async function handleRegisterSubmit(event) {
     event.preventDefault();
 
     const usernameInput = document.getElementById("username");
-    const emailInput = document.getElementById("email");
+    const emailInput    = document.getElementById("email");
     const passwordInput = document.getElementById("password");
-    const submitButton = event.target.querySelector("button[type='submit']");
-    const statusEl = document.getElementById("status");
+    const submitButton  = event.target.querySelector("button[type='submit']");
 
     const username = usernameInput.value.trim();
-    const email = emailInput.value.trim();
+    const email    = emailInput.value.trim();
     const password = passwordInput.value;
 
     submitButton.disabled = true;
-    statusEl.textContent = "Регистрация...";
-    statusEl.style.color = "";
+    setStatus("Регистрация...", "");
 
     try {
         const user = await register(username, email, password);
 
-        statusEl.textContent = `Успешна регистрация! Добре дошъл, ${user.username}.`;
-        statusEl.style.color = "green";
+        setStatus(`Успешна регистрация! Добре дошъл, ${user.username}.`, "success");
 
-        // Редирект към главната страница – вече сме автоматично логнати
+        // Редирект към начало — вече сме автоматично логнати
         setTimeout(() => {
             window.location.href = "/";
         }, 1200);
+
     } catch (error) {
         console.error("Register грешка:", error);
-        statusEl.textContent = error.message || "Възникна грешка при регистрацията.";
-        statusEl.style.color = "red";
+        setStatus(error.message || "Възникна грешка при регистрацията.", "error");
         submitButton.disabled = false;
     }
 }
 
-
 /**
- * Главна функция за register страницата.
+ * Инициализира register страницата.
  */
 function initRegisterPage() {
     const form = document.getElementById("register-form");
-    if (!form) return;  // не сме на register страницата – нищо не правим
+    if (!form) return;  // не сме на register страницата
 
     if (isLoggedIn()) {
         window.location.href = "/";
@@ -131,15 +135,9 @@ function initRegisterPage() {
 }
 
 
-// auth.js се зарежда и от login.html, и от register.html –
-// не знаем на коя страница сме. Затова викаме само init функцията
-// за съответната форма (ако формата я няма на страницата,
-// addEventListener просто няма да се изпълни – проверката е в init-а).
-
-/**
- * При зареждане на страницата викаме инициализаторите за двете форми.
- * Всеки сам проверява дали неговата форма съществува на страницата.
- */
+// ============================================================
+// INIT — auth.js се зарежда и от двете страници
+// ============================================================
 document.addEventListener("DOMContentLoaded", () => {
     initLoginPage();
     initRegisterPage();

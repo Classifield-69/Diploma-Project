@@ -6,9 +6,6 @@
  * 2. Извиква API-то за детайлите на филма
  * 3. Извиква API-то за ревютата на филма
  * 4. Рендерира всичко на страницата
- *
- * Засега е read-only – не позволява писане на ревюта.
- * Когато имплементираме login, ще добавим форма за писане.
  */
 
 
@@ -16,35 +13,29 @@
  * Извлича movie ID от URL-а.
  * URL pattern: /movies/<id> – например /movies/5
  *
- * @returns {number|null} – ID-то или null ако не може да се извлече
+ * @returns {number|null}
  */
 function getMovieIdFromUrl() {
-    // window.location.pathname = "/movies/5"
-    // split("/") = ["", "movies", "5"]
-    // последният елемент е ID-то
     const parts = window.location.pathname.split("/");
     const idString = parts[parts.length - 1];
     const id = parseInt(idString, 10);
-
     return Number.isNaN(id) ? null : id;
 }
 
 /**
- * Форматира ML оценка от backend-а в четим вид.
+ * Форматира ML оценка в четим вид.
  *
- * @param {number|null} value – оценката (1.0-5.0) или null ако не е анализирано
- * @returns {string} – "4.56 / 5.0" или "Все още не е анализирано"
+ * @param {number|null} value
+ * @returns {string} "4.56 / 5.0" или null ако не е анализирано
  */
 function formatRating(value) {
-    if (value === null || value === undefined) {
-        return "Все още не е анализирано";
-    }
+    if (value === null || value === undefined) return null;
     return `${value.toFixed(2)} / 5.0`;
 }
 
-
 /**
- * Рендерира детайлите на филма (постер, заглавие, актьори, и т.н.)
+ * Рендерира горната секция на страницата:
+ * постер вляво, инфо (заглавие, мета, оценки, analyze) вдясно.
  *
  * @param {object} movie – обект от /api/movies/<id>
  * @returns {string} – HTML низ
@@ -55,40 +46,57 @@ function renderMovieInfo(movie) {
     const actors = movie.actors.join(", ");
     const reviewsCount = movie.stats.reviews_count;
 
-    // Средни ML оценки (или съобщение че не са анализирани)
-    const lstmAvg = formatRating(movie.stats.avg_lstm_prediction);
-    const bilstmAvg = formatRating(movie.stats.avg_bilstm_prediction);
+    // ML оценки — ако са null показваме "pending" хапче
+    const lstmRating   = formatRating(movie.stats.avg_lstm_prediction);
+    const bilstmRating = formatRating(movie.stats.avg_bilstm_prediction);
 
-    // Analyze бутон — показва се САМО на admin user-и.
-    // analysis.js закача click handler чрез event delegation.
+    const lstmPill = lstmRating
+        ? `<span class="score-pill score-pill--lstm">LSTM: ${lstmRating}</span>`
+        : `<span class="score-pill score-pill--pending">LSTM: Не е анализирано</span>`;
+
+    const bilstmPill = bilstmRating
+        ? `<span class="score-pill score-pill--bilstm">BiLSTM: ${bilstmRating}</span>`
+        : `<span class="score-pill score-pill--pending">BiLSTM: Не е анализирано</span>`;
+
+    // Analyze бутон — само за admin
     const user = getCurrentUser();
     const isAdmin = user && user.role === "admin";
 
     const analyzeSection = isAdmin
-        ? `
-            <div class="analyze-section">
-                <button id="analyze-btn" data-movie-id="${movie.id}">Analyze</button>
-                <p id="analyze-status"></p>
-            </div>
-        `
+        ? `<div class="analyze-section">
+               <button id="analyze-btn" data-movie-id="${movie.id}">Analyze</button>
+               <p id="analyze-status"></p>
+           </div>`
         : "";
 
     return `
         <img
             src="${posterUrl}"
             alt="Постер на ${movie.title}"
-            class="movie-poster-large"
+            class="film-poster-large"
         >
-        <div class="movie-info-text">
-            <h1>${movie.title} <span class="movie-year">(${movie.year})</span></h1>
-            <p><strong>Режисьор:</strong> ${movie.director}</p>
-            <p><strong>Актьори:</strong> ${actors}</p>
-            <p><strong>Жанрове:</strong> ${genres}</p>
-            <p><strong>Брой ревюта:</strong> ${reviewsCount}</p>
+        <div class="film-info-text">
+            <div>
+                <h1 class="film-title">
+                    ${movie.title}
+                    <span class="movie-year">(${movie.year})</span>
+                </h1>
+            </div>
 
-            <div class="movie-predictions">
-                <p><strong>Средна LSTM оценка:</strong> ${lstmAvg}</p>
-                <p><strong>Средна BiLSTM оценка:</strong> ${bilstmAvg}</p>
+            <hr class="film-divider">
+
+            <div class="film-meta">
+                <p><strong>Режисьор:</strong> ${movie.director}</p>
+                <p><strong>Актьори:</strong> ${actors}</p>
+                <p><strong>Жанрове:</strong> ${genres}</p>
+                <p><strong>Брой ревюта:</strong> ${reviewsCount}</p>
+            </div>
+
+            <hr class="film-divider">
+
+            <div class="film-scores">
+                ${lstmPill}
+                ${bilstmPill}
             </div>
 
             ${analyzeSection}
@@ -97,7 +105,7 @@ function renderMovieInfo(movie) {
 }
 
 /**
- * Форматира ISO datetime низ в по-четим вид.
+ * Форматира ISO datetime в български формат.
  * "2026-05-23T14:19:00" → "23.05.2026 г., 14:19"
  *
  * @param {string} isoString
@@ -105,7 +113,6 @@ function renderMovieInfo(movie) {
  */
 function formatDate(isoString) {
     const date = new Date(isoString);
-    // toLocaleString с "bg-BG" дава български формат на датата
     return date.toLocaleString("bg-BG", {
         year: "numeric",
         month: "2-digit",
@@ -115,7 +122,6 @@ function formatDate(isoString) {
     });
 }
 
-
 /**
  * Рендерира едно ревю.
  *
@@ -123,23 +129,22 @@ function formatDate(isoString) {
  * @returns {string} – HTML низ
  */
 function renderReview(review) {
-    const date = formatDate(review.created_at);
+    const date     = formatDate(review.created_at);
     const safeText = escapeHtml(review.text);
 
-    // ML оценки на ревюто — или "не е анализирано" ако са NULL.
-    // Проверяваме И двете полета — ако някое е NULL, не показваме оценки.
+    // ML тагове — показваме само ако И двете оценки са налични
     const hasPredictions =
-        review.lstm_prediction !== null && review.bilstm_prediction !== null;
+        review.lstm_prediction !== null &&
+        review.bilstm_prediction !== null;
 
     const predictionsHtml = hasPredictions
-        ? `<p class="review-predictions">
-               LSTM: ${review.lstm_prediction.toFixed(2)} / 5.0
-               |
-               BiLSTM: ${review.bilstm_prediction.toFixed(2)} / 5.0
-           </p>`
-        : `<p class="review-predictions review-predictions-empty">
-               Все още не е анализирано
-           </p>`;
+        ? `<div class="review-predictions">
+               <span class="review-tag">LSTM: ${review.lstm_prediction.toFixed(2)} / 5.0</span>
+               <span class="review-tag">BiLSTM: ${review.bilstm_prediction.toFixed(2)} / 5.0</span>
+           </div>`
+        : `<div class="review-predictions">
+               <span class="review-tag review-tag--empty">Все още не е анализирано</span>
+           </div>`;
 
     return `
         <article class="review">
@@ -154,10 +159,7 @@ function renderReview(review) {
 }
 
 /**
- * Защитава срещу HTML/XSS injection в потребителски текст.
- * Превръща опасни символи (<, >, &, ", ') в техните HTML entities.
- *
- * Пример: <script>alert(1)</script> → &lt;script&gt;alert(1)&lt;/script&gt;
+ * Защита срещу XSS — превръща опасни символи в HTML entities.
  *
  * @param {string} text
  * @returns {string}
@@ -168,55 +170,54 @@ function escapeHtml(text) {
     return div.innerHTML;
 }
 
-
 /**
- * Главна функция – зарежда детайлите на филма и ревютата паралелно.
+ * Главна функция — зарежда детайлите и ревютата паралелно.
  */
 async function loadMovieDetailsPage() {
-    const movieId = getMovieIdFromUrl();
-    const statusEl = document.getElementById("status");
-    const movieInfoEl = document.getElementById("movie-info");
-    const reviewsListEl = document.getElementById("reviews-list");
-    const reviewsHeadingEl = document.getElementById("reviews-heading");
+    const movieId        = getMovieIdFromUrl();
+    const statusEl       = document.getElementById("status");
+    const movieInfoEl    = document.getElementById("movie-info");
+    const reviewsListEl  = document.getElementById("reviews-list");
+    const reviewsHeading = document.getElementById("reviews-heading");
 
     if (movieId === null) {
         statusEl.textContent = "Невалиден URL – не може да се определи ID на филма.";
-        statusEl.style.color = "red";
+        statusEl.classList.add("error");
         return;
     }
 
     try {
         statusEl.textContent = "Зареждане...";
 
-        // Promise.all – двете заявки тръгват паралелно, не една след друга.
-        // Спестява време, защото не зависят една от друга.
+        // Двете заявки тръгват паралелно
         const [movieData, reviewsData] = await Promise.all([
             fetchMovieById(movieId),
             fetchMovieReviews(movieId),
         ]);
 
-        // Рендерираме детайлите на филма
+        // Рендерираме детайлите
         movieInfoEl.innerHTML = renderMovieInfo(movieData.movie);
 
-        // Рендерираме ревютата (ако има)
-        if (reviewsData.count > 0) {
-            reviewsHeadingEl.textContent = `Ревюта (${reviewsData.count})`;
-            reviewsHeadingEl.style.display = "";  // прави го видим
-            reviewsListEl.innerHTML = reviewsData.reviews.map(renderReview).join("");
-        } else {
-            reviewsHeadingEl.textContent = "Ревюта";
-            reviewsHeadingEl.style.display = "";
-            reviewsListEl.innerHTML = "<p>Все още няма ревюта за този филм.</p>";
-        }
+        // Рендерираме ревютата
+        const count = reviewsData.count;
+        reviewsHeading.innerHTML = `
+            <span class="section-title">Ревюта</span>
+            <span class="section-count">${count} общо</span>
+        `;
+        reviewsHeading.style.display = "";
 
-        // Скриваме статус съобщението – всичко е заредено
+        reviewsListEl.innerHTML = count > 0
+            ? reviewsData.reviews.map(renderReview).join("")
+            : `<p class="reviews-empty">Все още няма ревюта за този филм.</p>`;
+
+        // Скриваме статус съобщението
         statusEl.style.display = "none";
+
     } catch (error) {
         console.error("Грешка при зареждане:", error);
         statusEl.textContent = `Грешка: ${error.message}`;
-        statusEl.style.color = "red";
+        statusEl.classList.add("error");
     }
 }
-
 
 document.addEventListener("DOMContentLoaded", loadMovieDetailsPage);
