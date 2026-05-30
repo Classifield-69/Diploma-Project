@@ -3,34 +3,47 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Филмови ревюта</title>
-
-    <!--
-        Двата JS файла се зареждат в правилния ред:
-        1. api.js първо – дефинира fetchMovies(), staticUrl()
-        2. main.js след това – ползва тези функции
-
-        defer = браузърът чака HTML-ът да се парсне, после изпълнява JS-а.
-        Това позволява <script> в <head>, без да блокираме рендерирането.
-    -->
+    <title>FilmSight</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;500&family=DM+Sans:wght@400;500&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/static/css/style.css">
     <script src="/static/js/api.js" defer></script>
-    <script src="/static/js/header.js" defer></script>
     <script src="/static/js/main.js" defer></script>
 </head>
 <body>
-    <div id="site-header"></div>
 
-    <header>
-        <h1>🎬 Филмови ревюта</h1>
-        <p>Система за анализ на филмови ревюта с невронни мрежи</p>
+    <!-- ── HEADER ── -->
+    <header class="site-header">
+        <nav class="nav">
+            <a href="/" class="nav-logo">FilmSight</a>
+            <a href="/" class="nav-link">Начало</a>
+            <div class="nav-right">
+                <a href="/register" class="nav-btn nav-btn--outline">Регистрация</a>
+                <a href="/login" class="nav-btn nav-btn--outline">Вход</a>
+            </div>
+        </nav>
+        <div class="nav-tagline">Филмово AI списание</div>
     </header>
 
-    <main>
+    <!-- ── MAIN ── -->
+    <main class="main-content">
+        <div class="section-header">
+            <h2 class="section-title">Всички филми</h2>
+            <span class="section-count" id="movies-count"></span>
+        </div>
+
         <!--
-            Тук main.js ще инжектира картите за филмите.
+            Тук main.js инжектира картите за филмите.
             Контейнерът е празен в HTML-а – пълни се динамично.
         -->
-        <section id="movies-grid"></section>
+        <section id="movies-grid" class="movies-grid"></section>
     </main>
+
+    <!-- ── FOOTER ── -->
+    <footer class="site-footer">
+        <span>© 2026 FilmSight · Всички права запазени</span>
+    </footer>
+
 </body>
 </html>
