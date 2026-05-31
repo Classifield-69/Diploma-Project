@@ -12,20 +12,14 @@
     <!-- Стилове за login и register -->
     <link rel="stylesheet" href="/static/css/auth.css">
     <script src="/static/js/api.js" defer></script>
+    <script src="/static/js/header.js" defer></script>
     <script src="/static/js/auth.js" defer></script>
 </head>
 <body>
 
     <!-- ── HEADER ── -->
     <header class="site-header">
-        <nav class="nav">
-            <a href="/" class="nav-logo">FilmSight</a>
-            <a href="/" class="nav-link">Начало</a>
-            <div class="nav-right">
-                <a href="/register" class="nav-btn nav-btn--outline">Регистрация</a>
-                <a href="/login" class="nav-btn nav-btn--outline">Вход</a>
-            </div>
-        </nav>
+        <!-- header.js рендира nav динамично според auth state -->
         <div class="nav-tagline">Филмово AI списание</div>
     </header>
 

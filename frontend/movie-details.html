@@ -12,21 +12,15 @@
     <!-- Стилове специфични за страницата с детайли на филм -->
     <link rel="stylesheet" href="/static/css/movie-details.css">
     <script src="/static/js/api.js" defer></script>
+    <script src="/static/js/header.js" defer></script>
     <script src="/static/js/reviews.js" defer></script>
     <script src="/static/js/analysis.js" defer></script>
 </head>
 <body>
 
-    <!-- ── HEADER (същият като index.html) ── -->
+    <!-- ── HEADER ── -->
     <header class="site-header">
-        <nav class="nav">
-            <a href="/" class="nav-logo">FilmSight</a>
-            <a href="/" class="nav-link">Начало</a>
-            <div class="nav-right">
-                <a href="/register" class="nav-btn nav-btn--outline">Регистрация</a>
-                <a href="/login" class="nav-btn nav-btn--outline">Вход</a>
-            </div>
-        </nav>
+        <!-- header.js рендира nav динамично според auth state -->
         <div class="nav-tagline">Филмово AI списание</div>
     </header>
 
@@ -43,6 +37,10 @@
         <div id="reviews-heading" class="section-header" style="display: none;">
             <!-- reviews.js попълва текста динамично -->
         </div>
+
+        <!-- Форма за ново ревю — reviews.js рендира динамично -->
+        <div id="review-form-container"></div>
+
         <section id="reviews-list" class="reviews-list"></section>
 
     </main>

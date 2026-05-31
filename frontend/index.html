@@ -9,20 +9,14 @@
     <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;500&family=DM+Sans:wght@400;500&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="/static/css/style.css">
     <script src="/static/js/api.js" defer></script>
+    <script src="/static/js/header.js" defer></script>
     <script src="/static/js/main.js" defer></script>
 </head>
 <body>
 
     <!-- ── HEADER ── -->
     <header class="site-header">
-        <nav class="nav">
-            <a href="/" class="nav-logo">FilmSight</a>
-            <a href="/" class="nav-link">Начало</a>
-            <div class="nav-right">
-                <a href="/register" class="nav-btn nav-btn--outline">Регистрация</a>
-                <a href="/login" class="nav-btn nav-btn--outline">Вход</a>
-            </div>
-        </nav>
+        <!-- header.js рендира nav динамично според auth state -->
         <div class="nav-tagline">Филмово AI списание</div>
     </header>
 

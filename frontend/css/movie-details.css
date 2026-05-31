@@ -160,6 +160,101 @@
 }
 
 
+/* ── ФОРМА ЗА НОВО РЕВЮ ── */
+.review-form-section {
+    margin-bottom: 24px;
+    padding: 20px 0;
+    border-bottom: 0.5px solid var(--color-border);
+}
+
+.review-form-login {
+    font-size: 13px;
+    color: var(--color-muted);
+}
+
+.review-form-login a {
+    color: var(--color-black);
+    font-weight: 500;
+    text-decoration: underline;
+    text-underline-offset: 2px;
+}
+
+.review-form {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.review-textarea {
+    font-family: var(--font-body);
+    font-size: 13px;
+    color: var(--color-black);
+    background: var(--color-white);
+    border: 0.5px solid var(--color-border);
+    border-radius: 4px;
+    padding: 12px 14px;
+    width: 100%;
+    resize: vertical;
+    outline: none;
+    line-height: 1.6;
+    transition: border-color 0.15s;
+}
+
+.review-textarea::placeholder {
+    color: #cccccc;
+}
+
+.review-textarea:focus {
+    border-color: var(--color-black);
+}
+
+.review-form-footer {
+    display: flex;
+    justify-content: flex-end;
+    align-items: center;
+    gap: 14px;
+}
+
+.review-char-count {
+    font-size: 11px;
+    color: var(--color-muted);
+}
+
+.review-submit-btn {
+    font-family: var(--font-body);
+    font-size: 11px;
+    font-weight: 500;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    padding: 8px 22px;
+    background: var(--color-black);
+    color: #ffffff;
+    border: none;
+    border-radius: 3px;
+    cursor: pointer;
+    transition: opacity 0.15s;
+}
+
+.review-submit-btn:hover {
+    opacity: 0.85;
+}
+
+.review-submit-btn:disabled {
+    opacity: 0.45;
+    cursor: not-allowed;
+}
+
+.review-status {
+    font-size: 12px;
+    color: var(--color-muted);
+    min-height: 16px;
+}
+
+.review-status.error {
+    color: #c0392b;
+}
+
+
 /* ── REVIEWS ── */
 
 /* Section header — преизползваме .section-header от style.css */

@@ -21,35 +21,42 @@ function renderHeader() {
     const user = getCurrentUser();
 
     // Логото е винаги едно и също — линк към началната страница
-    const logo = `<a href="/" class="site-logo">🎬 Филмови ревюта</a>`;
+    const logo = `<a href="/" class="nav-logo">FilmSight</a>`;
 
     // Динамичната част — auth actions вдясно
-    let actions;
+    let navRight;
 
     if (user === null) {
-        // Гост — линкове за вход и регистрация
-        actions = `
-            <a href="/login" class="nav-link">Вход</a>
-            <a href="/register" class="nav-link">Регистрация</a>
+        // Гост — бутони за регистрация и вход
+        navRight = `
+            <div class="nav-right">
+                <a href="/register" class="nav-btn nav-btn--outline">Регистрация</a>
+                <a href="/login" class="nav-btn nav-btn--outline">Вход</a>
+            </div>
         `;
     } else if (user.role === "admin") {
-        // Admin — име с корона + Изход
-        actions = `
-            <span class="nav-user nav-user-admin">👑 ${escapeHeaderText(user.username)}</span>
-            <button id="logout-btn" class="nav-link nav-button">Изход</button>
+        // Admin — корона + потребителско ime + бутон Изход
+        navRight = `
+            <div class="nav-right">
+                <span class="nav-user nav-user-admin">👑 ${escapeHeaderText(user.username)}</span>
+                <button id="logout-btn" class="nav-btn nav-btn--outline">Изход</button>
+            </div>
         `;
     } else {
-        // Обикновен user — поздрав + Изход
-        actions = `
-            <span class="nav-user">Здравей, ${escapeHeaderText(user.username)}</span>
-            <button id="logout-btn" class="nav-link nav-button">Изход</button>
+        // Обикновен user — поздрав + бутон Изход
+        navRight = `
+            <div class="nav-right">
+                <span class="nav-user">Здравей, ${escapeHeaderText(user.username)}</span>
+                <button id="logout-btn" class="nav-btn nav-btn--outline">Изход</button>
+            </div>
         `;
     }
 
     return `
-        <nav class="site-header-inner">
+        <nav class="nav">
             ${logo}
-            <div class="nav-actions">${actions}</div>
+            <a href="/" class="nav-link">Начало</a>
+            ${navRight}
         </nav>
     `;
 }
@@ -89,10 +96,14 @@ function handleLogout() {
  * Инициализира header-а — намира контейнера и го рендира.
  */
 function initHeader() {
-    const container = document.getElementById("site-header");
+    const container = document.querySelector(".site-header");
     if (!container) return;  // на тази страница няма header контейнер
 
+    // Запазваме tagline елемента преди да пренапишем innerHTML
+    const tagline = container.querySelector(".nav-tagline");
     container.innerHTML = renderHeader();
+    // Връщаме tagline-а след nav-а
+    if (tagline) container.appendChild(tagline);
 
     // Закачаме listener за Изход бутона (ако сме рендирали такъв).
     // querySelector на самия container, за да не търсим в целия DOM.

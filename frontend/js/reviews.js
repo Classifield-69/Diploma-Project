@@ -171,6 +171,96 @@ function escapeHtml(text) {
 }
 
 /**
+ * Рендерира секцията за писане на ревю.
+ * - Логнат user → показва форма с textarea и бутон
+ * - Гост → линк към /login
+ *
+ * @param {number} movieId
+ * @returns {string} HTML низ
+ */
+function renderReviewForm(movieId) {
+    if (!isLoggedIn()) {
+        return `
+            <div class="review-form-section">
+                <p class="review-form-login">
+                    <a href="/login">Влез в акаунта си</a>, за да напишеш ревю.
+                </p>
+            </div>
+        `;
+    }
+
+    return `
+        <div class="review-form-section">
+            <form id="review-form" class="review-form" novalidate>
+                <textarea
+                    id="review-text"
+                    class="review-textarea"
+                    placeholder="Напиши своето ревю... (поне 10 символа)"
+                    rows="4"
+                    minlength="10"
+                    maxlength="5000"
+                    required
+                ></textarea>
+                <div class="review-form-footer">
+                    <span id="review-char-count" class="review-char-count">0 / 5000</span>
+                    <button type="submit" class="review-submit-btn">Публикувай</button>
+                </div>
+                <p id="review-status" class="review-status"></p>
+            </form>
+        </div>
+    `;
+}
+
+
+/**
+ * Инициализира формата за ревю — закача submit и char counter.
+ * Извиква се след като формата е рендирана в DOM-а.
+ *
+ * @param {number} movieId
+ */
+function initReviewForm(movieId) {
+    const form = document.getElementById("review-form");
+    if (!form) return;  // гост — няма форма
+
+    const textarea   = document.getElementById("review-text");
+    const charCount  = document.getElementById("review-char-count");
+    const statusEl   = document.getElementById("review-status");
+    const submitBtn  = form.querySelector("button[type='submit']");
+
+    // Брояч на символи
+    textarea.addEventListener("input", () => {
+        charCount.textContent = `${textarea.value.length} / 5000`;
+    });
+
+    form.addEventListener("submit", async (event) => {
+        event.preventDefault();
+
+        const text = textarea.value.trim();
+        if (text.length < 10) {
+            statusEl.textContent = "Ревюто трябва да е поне 10 символа.";
+            statusEl.className = "review-status error";
+            return;
+        }
+
+        submitBtn.disabled = true;
+        statusEl.textContent = "Публикуване...";
+        statusEl.className = "review-status";
+
+        try {
+            await postReview(movieId, text);
+            // Reload-ваме страницата за да се покаже новото ревю
+            window.location.reload();
+        } catch (error) {
+            console.error("Грешка при публикуване:", error);
+            statusEl.textContent = error.message || "Грешка при публикуване.";
+            statusEl.className = "review-status error";
+            submitBtn.disabled = false;
+        }
+    });
+}
+
+
+/**
  * Главна функция — зарежда детайлите и ревютата паралелно.
  */
 async function loadMovieDetailsPage() {
@@ -205,6 +295,13 @@ async function loadMovieDetailsPage() {
             <span class="section-count">${count} общо</span>
         `;
         reviewsHeading.style.display = "";
+
+        // Рендерираме формата за ревю (логнат → форма, гост → линк)
+        const formContainer = document.getElementById("review-form-container");
+        if (formContainer) {
+            formContainer.innerHTML = renderReviewForm(movieId);
+            initReviewForm(movieId);
+        }
 
         reviewsListEl.innerHTML = count > 0
             ? reviewsData.reviews.map(renderReview).join("")

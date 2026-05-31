@@ -205,6 +205,21 @@ async function fetchCurrentUser() {
 
 
 /**
+ * Публикува ново ревю за филм. Изисква JWT токен (логнат user).
+ *
+ * @param {number} movieId
+ * @param {string} text – текстът на ревюто (10–5000 символа)
+ * @returns {Promise<object>} – новосъздаденото ревю
+ * @throws {Error} 400 (невалидни данни) | 401 (не е логнат) | 404 (няма филм)
+ */
+async function postReview(movieId, text) {
+    return apiRequest("/api/reviews", {
+        method: "POST",
+        body: JSON.stringify({ movie_id: movieId, text }),
+    });
+}
+
+/**
  * Регистрира нов user и веднага го логва (запазва токена).
  *
  * Backend-ът връща access_token при register също – удобно е,

@@ -106,6 +106,20 @@ a {
     border: 0.5px solid #ffffff;
 }
 
+/* Потребителско ime в nav (логнат user / admin) */
+.nav-user {
+    font-size: 11px;
+    font-weight: 500;
+    color: #ffffff;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    padding: 6px 0;
+}
+
+.nav-user-admin {
+    color: #f0c040;
+}
+
 /* Подзаглавие под навигацията */
 .nav-tagline {
     background: var(--color-black);
