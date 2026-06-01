@@ -17,14 +17,11 @@
 const API_BASE = "";
 
 // Префикс за статичните файлове (постери, икони и т.н.)
-// Backend връща poster_url като /img/posters/x.webp, но Flask ги
-// сервира на /static/img/posters/x.webp – затова добавяме префикс.
-const STATIC_PREFIX = "/static";
+const STATIC_PREFIX = "";
 
 
 /**
  * Превръща API-овски път към статичен файл в реален URL за браузъра.
- * Пример: "/img/posters/oppenheimer.webp" → "/static/img/posters/oppenheimer.webp"
  */
 function staticUrl(path) {
     return STATIC_PREFIX + path;

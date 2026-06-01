@@ -30,7 +30,7 @@ from routes.analysis import analysis_bp
 app = Flask(
     __name__,
     static_folder="../frontend",
-    static_url_path="/static"
+    static_url_path=""
 )
 app.json.ensure_ascii = False  # позволява кирилица в JSON отговорите
 
