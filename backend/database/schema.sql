@@ -6,11 +6,9 @@
 
 USE movie_reviews_db;
 
--- ============================================================
 -- Таблица: users
--- Съхранява регистрираните потребители на системата.
--- Ролите са 'user' (стандартен потребител) и 'admin'.
--- ============================================================
+-- Съхранява регистрираните потребители на системата
+-- Ролите са 'user' (стандартен потребител) и 'admin'
 CREATE TABLE IF NOT EXISTS users (
     id              INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
     username        VARCHAR(50) NOT NULL UNIQUE,
@@ -24,10 +22,8 @@ CREATE TABLE IF NOT EXISTS users (
     INDEX idx_role (role)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
--- ============================================================
 -- Таблица: movies
--- Съхранява филмите с техните метаданни.
--- ============================================================
+-- Съхранява филмите с техните метаданни
 CREATE TABLE IF NOT EXISTS movies (
     id              INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
     title           VARCHAR(255) NOT NULL,
@@ -40,11 +36,9 @@ CREATE TABLE IF NOT EXISTS movies (
     INDEX idx_year (year)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
--- ============================================================
 -- Таблица: genres
--- Нормализирана таблица с жанровете.
--- Един филм може да има няколко жанра (many-to-many).
--- ============================================================
+-- Нормализирана таблица с жанровете
+-- Един филм може да има няколко жанра (many-to-many)
 CREATE TABLE IF NOT EXISTS genres (
     id              INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
     name            VARCHAR(50) NOT NULL UNIQUE,
@@ -52,10 +46,8 @@ CREATE TABLE IF NOT EXISTS genres (
     INDEX idx_name (name)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
--- ============================================================
 -- Свързваща таблица: movie_genres
--- Реализира връзка many-to-many между movies и genres.
--- ============================================================
+-- Реализира връзка many-to-many между movies и genres
 CREATE TABLE IF NOT EXISTS movie_genres (
     movie_id        INT UNSIGNED NOT NULL,
     genre_id        INT UNSIGNED NOT NULL,
@@ -68,11 +60,9 @@ CREATE TABLE IF NOT EXISTS movie_genres (
         ON DELETE CASCADE ON UPDATE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
--- ============================================================
 -- Таблица: actors
--- Нормализирана таблица с актьорите.
--- Един филм може да има няколко актьора (many-to-many).
--- ============================================================
+-- Нормализирана таблица с актьорите
+-- Един филм може да има няколко актьора (many-to-many)
 CREATE TABLE IF NOT EXISTS actors (
     id              INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
     name            VARCHAR(255) NOT NULL,
@@ -80,10 +70,8 @@ CREATE TABLE IF NOT EXISTS actors (
     INDEX idx_name (name)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
--- ============================================================
 -- Свързваща таблица: movie_actors
--- Реализира връзка many-to-many между movies и actors.
--- ============================================================
+-- Реализира връзка many-to-many между movies и actors
 CREATE TABLE IF NOT EXISTS movie_actors (
     movie_id        INT UNSIGNED NOT NULL,
     actor_id        INT UNSIGNED NOT NULL,
@@ -96,18 +84,8 @@ CREATE TABLE IF NOT EXISTS movie_actors (
         ON DELETE CASCADE ON UPDATE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
--- ============================================================
 -- Таблица: reviews
 -- Съхранява ревютата за филмите.
--- 
--- Полета за sentiment (стойности от 0.00 до 100.00):
---   - true_sentiment: реалната оценка (от OpenAI при генериране)
---   - lstm_prediction: предсказание от еднопосочната LSTM мрежа
---   - bilstm_prediction: предсказание от двупосочната BiLSTM мрежа
--- 
--- LSTM и BiLSTM полетата са NULL докато admin не натисне 
--- бутона "Analyze" за съответния филм.
--- ============================================================
 CREATE TABLE IF NOT EXISTS reviews (
     id                  INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
     user_id             INT UNSIGNED NOT NULL,
@@ -127,7 +105,7 @@ CREATE TABLE IF NOT EXISTS reviews (
     INDEX idx_movie_id (movie_id),
     INDEX idx_created_at (created_at),
     
-    -- Проверки за валидност на sentiment стойностите (0-100)
+    -- Проверки за валидност на sentiment стойностите
     CONSTRAINT chk_true_sentiment 
         CHECK (true_sentiment IS NULL OR 
            (true_sentiment >= 0 AND true_sentiment <= 100)),
@@ -138,7 +116,3 @@ CREATE TABLE IF NOT EXISTS reviews (
         CHECK (bilstm_prediction IS NULL OR 
                (bilstm_prediction >= 0 AND bilstm_prediction <= 100))
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
-
--- ============================================================
--- Край на schema.sql
--- ============================================================

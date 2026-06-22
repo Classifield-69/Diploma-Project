@@ -1,33 +1,18 @@
 /**
- * header.js — рендериране на site-wide navigation header.
- *
- * Зарежда се на ВСЯКА страница. Намира контейнера #site-header
- * и го запълва с нав според auth state-а:
- *   - Гост:  лого + "Вход" + "Регистрация"
- *   - User:  лого + "Здравей, {username}" + "Изход"
- *   - Admin: лого + "👑 {username}" + "Изход"
- *
- * Зависи от api.js за getCurrentUser() и logout().
- * Затова api.js трябва да се зарежда ПРЕДИ header.js.
+ * Рендерира navigation header-а на всяка страница.
+ * Зависи от api.js (getCurrentUser, logout) — трябва да се зарежда след него.
  */
 
 
-/**
- * Рендерира HTML-а на header-а според auth state.
- *
- * @returns {string} HTML низ
- */
+/** @returns {string} HTML низ на header-а според auth state */
 function renderHeader() {
     const user = getCurrentUser();
 
-    // Логото е винаги едно и също — линк към началната страница
     const logo = `<a href="/" class="nav-logo">FilmSight</a>`;
 
-    // Динамичната част — auth actions вдясно
     let navRight;
 
     if (user === null) {
-        // Гост — бутони за регистрация и вход
         navRight = `
             <div class="nav-right">
                 <a href="/register" class="nav-btn nav-btn--outline">Регистрация</a>
@@ -35,7 +20,6 @@ function renderHeader() {
             </div>
         `;
     } else if (user.role === "admin") {
-        // Admin — корона + потребителско ime + бутон Изход
         navRight = `
             <div class="nav-right">
                 <span class="nav-user nav-user-admin">👑 ${escapeHeaderText(user.username)}</span>
@@ -43,7 +27,6 @@ function renderHeader() {
             </div>
         `;
     } else {
-        // Обикновен user — поздрав + бутон Изход
         navRight = `
             <div class="nav-right">
                 <span class="nav-user">Здравей, ${escapeHeaderText(user.username)}</span>
@@ -63,12 +46,8 @@ function renderHeader() {
 
 
 /**
- * Локален escape за защита срещу XSS в username.
- *
- * Дублираме escapeHtml от reviews.js, защото header.js се зарежда и на
- * страници, които НЕ зареждат reviews.js (index, login, register).
- * По-добре малко дублирана функция, отколкото да караме всяка страница
- * да зарежда reviews.js само заради едно escape.
+ * Escape за защита срещу XSS в username.
+ * Дублирано от reviews.js, защото header.js се зарежда и на страници без reviews.js.
  *
  * @param {string} text
  * @returns {string}
@@ -80,33 +59,23 @@ function escapeHeaderText(text) {
 }
 
 
-/**
- * Обработва клик на Изход бутона.
- */
+/** Обработва клик на бутона Изход. */
 function handleLogout() {
-    logout();  // от api.js — изтрива token + user от localStorage
-    // Redirect към началната страница. Header.js ще се изпълни отново
-    // на новата страница и ще се рендира като "Гост" view, понеже
-    // localStorage вече е чист.
+    logout();
     window.location.href = "/";
 }
 
 
-/**
- * Инициализира header-а — намира контейнера и го рендира.
- */
+/** Намира .site-header контейнера и го рендира. */
 function initHeader() {
     const container = document.querySelector(".site-header");
-    if (!container) return;  // на тази страница няма header контейнер
+    if (!container) return;
 
     // Запазваме tagline елемента преди да пренапишем innerHTML
     const tagline = container.querySelector(".nav-tagline");
     container.innerHTML = renderHeader();
-    // Връщаме tagline-а след nav-а
     if (tagline) container.appendChild(tagline);
 
-    // Закачаме listener за Изход бутона (ако сме рендирали такъв).
-    // querySelector на самия container, за да не търсим в целия DOM.
     const logoutBtn = container.querySelector("#logout-btn");
     if (logoutBtn) {
         logoutBtn.addEventListener("click", handleLogout);

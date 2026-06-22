@@ -1,36 +1,26 @@
-/**
- * Логика за login и register страниците.
- * Двете форми са в един файл защото споделят структура (DRY принцип).
- * Зависи от api.js (login, register, isLoggedIn функциите).
- */
+/** Логика за login и register страниците. Зависи от api.js. */
 
 
 /**
  * Показва статус съобщение в #status елемента.
- * Добавя CSS клас за оцветяване вместо inline style.
- *
- * @param {string} text    – съобщението
- * @param {'success'|'error'|''} type – типа (определя цвета)
+ * @param {string} text
+ * @param {'success'|'error'|''} type
  */
 function setStatus(text, type = "") {
     const statusEl = document.getElementById("status");
     if (!statusEl) return;
 
     statusEl.textContent = text;
-    statusEl.className = "auth-status";          // reset
-    if (type) statusEl.classList.add(type);      // добавяме success или error
+    statusEl.className = "auth-status";
+    if (type) statusEl.classList.add(type);
 }
 
 
 // ============================================================
-// LOGIN
+// Login
 // ============================================================
 
-/**
- * Обработва submit на login формата.
- *
- * @param {Event} event – submit event-ът
- */
+/** @param {Event} event */
 async function handleLoginSubmit(event) {
     event.preventDefault();
 
@@ -49,7 +39,6 @@ async function handleLoginSubmit(event) {
 
         setStatus(`Успешен вход! Здравей, ${user.username}.`, "success");
 
-        // Кратка пауза за да види потребителят съобщението, после редирект
         setTimeout(() => {
             window.location.href = "/";
         }, 800);
@@ -61,14 +50,11 @@ async function handleLoginSubmit(event) {
     }
 }
 
-/**
- * Инициализира login страницата.
- */
+/** Инициализира login страницата. */
 function initLoginPage() {
     const form = document.getElementById("login-form");
-    if (!form) return;  // не сме на login страницата
+    if (!form) return;
 
-    // Ако вече сме логнати — редирект към начало
     if (isLoggedIn()) {
         window.location.href = "/";
         return;
@@ -79,14 +65,10 @@ function initLoginPage() {
 
 
 // ============================================================
-// REGISTER
+// Register
 // ============================================================
 
-/**
- * Обработва submit на register формата.
- *
- * @param {Event} event
- */
+/** @param {Event} event */
 async function handleRegisterSubmit(event) {
     event.preventDefault();
 
@@ -107,7 +89,6 @@ async function handleRegisterSubmit(event) {
 
         setStatus(`Успешна регистрация! Добре дошъл, ${user.username}.`, "success");
 
-        // Редирект към начало — вече сме автоматично логнати
         setTimeout(() => {
             window.location.href = "/";
         }, 1200);
@@ -119,12 +100,10 @@ async function handleRegisterSubmit(event) {
     }
 }
 
-/**
- * Инициализира register страницата.
- */
+/** Инициализира register страницата. */
 function initRegisterPage() {
     const form = document.getElementById("register-form");
-    if (!form) return;  // не сме на register страницата
+    if (!form) return;
 
     if (isLoggedIn()) {
         window.location.href = "/";
@@ -135,9 +114,7 @@ function initRegisterPage() {
 }
 
 
-// ============================================================
-// INIT — auth.js се зарежда и от двете страници
-// ============================================================
+// auth.js се зарежда и от двете страници — двете init функции сами проверяват дали са на правилната
 document.addEventListener("DOMContentLoaded", () => {
     initLoginPage();
     initRegisterPage();

@@ -1,64 +1,41 @@
-/**
- * API wrapper – единственото място където се правят fetch заявки.
- *
- * Всички останали JS файлове викат функциите оттук, вместо да правят
- * fetch директно. Така ако нещо в API-то се промени (URL, headers,
- * error handling), променяме само този файл.
- *
- * Защо така:
- * - Едно място за base URL → лесна смяна (dev/production)
- * - Едно място за JWT token → автоматично се добавя към всички заявки
- * - Едно място за error handling → консистентни грешки
- */
+/** Единственото място където се правят fetch заявки към backend-а. */
 
-// Base URL на backend API-то. Празен string означава "същия origin" –
-// тъй като Flask сервира и frontend-а, и API-то на същия порт (5001),
-// можем да ползваме относителни пътища като /api/movies.
+// Празен string = същия origin (Flask сервира frontend и API на един порт)
 const API_BASE = "";
-
-// Префикс за статичните файлове (постери, икони и т.н.)
 const STATIC_PREFIX = "";
 
 
-/**
- * Превръща API-овски път към статичен файл в реален URL за браузъра.
- */
+/** Превръща път към статичен файл в URL за браузъра. */
 function staticUrl(path) {
     return STATIC_PREFIX + path;
 }
 
 
 /**
- * Базова fetch функция – обвива fetch() с обработка на JSON и грешки.
+ * Базова fetch функция с обработка на JSON и грешки.
  *
- * @param {string} endpoint – пътят след API_BASE (напр. "/api/movies")
- * @param {object} options – стандартните fetch опции (method, body, и т.н.)
- * @returns {Promise<object>} – парснатият JSON отговор
- * @throws {Error} – ако response статусът е >= 400
+ * @param {string} endpoint – напр. "/api/movies"
+ * @param {object} options  – стандартни fetch опции
+ * @returns {Promise<object>}
+ * @throws {Error} при response статус >= 400
  */
 async function apiRequest(endpoint, options = {}) {
     const url = API_BASE + endpoint;
 
-    // Default headers – Content-Type за JSON заявки
     const headers = {
         "Content-Type": "application/json",
         ...options.headers,
     };
 
-    // Ако имаме JWT token в localStorage – добавяме го автоматично.
-    // (login.html по-късно ще го запазва там след успешен login)
     const token = localStorage.getItem("jwt_token");
     if (token) {
         headers["Authorization"] = `Bearer ${token}`;
     }
 
     const response = await fetch(url, { ...options, headers });
-
-    // Парсваме JSON отговора (дори при грешка – Flask връща JSON с error message)
     const data = await response.json();
 
     if (!response.ok) {
-        // Хвърляме грешка с message-а от backend-а (ако има такъв)
         throw new Error(data.error || data.message || `HTTP ${response.status}`);
     }
 
@@ -67,48 +44,32 @@ async function apiRequest(endpoint, options = {}) {
 
 
 // ============================================================
-// Конкретни API функции – по-добре от това да викаме apiRequest
-// директно от main.js, защото имената им документират какво правят.
+// Филми
 // ============================================================
 
-/**
- * Взима списък с всички филми.
- * @returns {Promise<{count: number, movies: Array}>}
- */
+/** @returns {Promise<{count: number, movies: Array}>} */
 async function fetchMovies() {
     return apiRequest("/api/movies");
 }
 
-/**
- * Взима детайли за конкретен филм по ID.
- * @param {number} movieId
- * @returns {Promise<object>}
- */
+/** @param {number} movieId */
 async function fetchMovieById(movieId) {
     return apiRequest(`/api/movies/${movieId}`);
 }
 
-/**
- * Взима всички ревюта за конкретен филм.
- * @param {number} movieId
- * @returns {Promise<{count: number, movie_id: number, reviews: Array}>}
- */
+/** @param {number} movieId */
 async function fetchMovieReviews(movieId) {
     return apiRequest(`/api/movies/${movieId}/reviews`);
 }
 
 /**
  * Пуска ML анализ върху ревютата на филм. Admin-only endpoint.
- *
- * Анализират се само ревютата с NULL предсказания. Backend-ът връща
- * статистика колко ревюта реално са обработени.
- *
- * ВАЖНО: Първото извикване след startup на сървъра отнема 5-10 сек
- * заради зареждане на TensorFlow моделите. Следващите са бързи.
+ * Анализират се само ревютата с NULL предсказания.
+ * Първото извикване след startup отнема 5–10 сек (зареждане на TensorFlow).
  *
  * @param {number} movieId
  * @returns {Promise<object>} {status, message, newly_analyzed_count, total_reviews, ...}
- * @throws {Error} 401 (липсва JWT) | 403 (не е admin) | 404 (няма филм)
+ * @throws {Error} 401 | 403 | 404
  */
 async function analyzeMovie(movieId) {
     return apiRequest(`/api/movies/${movieId}/analyze`, {
@@ -116,20 +77,22 @@ async function analyzeMovie(movieId) {
     });
 }
 
+
 // ============================================================
-// Authentication функции
+// Автентикация
 // ============================================================
 
-// Ключове за localStorage – на едно място, за да няма typo-та
+// Ключове за localStorage — на едно място, за да няма typo-та
 const TOKEN_KEY = "jwt_token";
 const USER_KEY = "current_user";
+
 /**
- * Логва потребител и записва токена + user данните в localStorage.
+ * Логва потребител и записва токена и user данните в localStorage.
  *
  * @param {string} email
  * @param {string} password
- * @returns {Promise<object>} – обект с user данни ({id, username, email, role})
- * @throws {Error} – при грешен login (401) или мрежова грешка
+ * @returns {Promise<object>} {id, username, email, role}
+ * @throws {Error} при грешен login (401) или мрежова грешка
  */
 async function login(email, password) {
     const data = await apiRequest("/api/auth/login", {
@@ -137,77 +100,58 @@ async function login(email, password) {
         body: JSON.stringify({ email, password }),
     });
 
-    // Запазваме токена – api.js ще го добавя автоматично към всяка следваща заявка
     localStorage.setItem(TOKEN_KEY, data.access_token);
-
-    // Запазваме и user данните – за да ги показваме без допълнителна заявка
-    // (име в navbar-а, например). JSON.stringify, защото localStorage пази
-    // само string-ове.
     localStorage.setItem(USER_KEY, JSON.stringify(data.user));
 
     return data.user;
 }
-/**
- * Излиза от системата – изтрива токена и user данните.
- * Не прави API заявка (JWT е stateless – няма какво да се "обяви" на сървъра).
- */
+
+/** Излиза от системата — изтрива токена и user данните от localStorage. */
 function logout() {
     localStorage.removeItem(TOKEN_KEY);
     localStorage.removeItem(USER_KEY);
 }
+
 /**
  * Връща текущия логнат user от localStorage (без API заявка).
- *
- * Бързо, но данните може да са остарели (ако user-ът е променен в базата).
- * За пресни данни – ползвай fetchCurrentUser().
- *
- * @returns {object|null} – user обектът или null ако не е логнат
+ * @returns {object|null}
  */
 function getCurrentUser() {
     const userJson = localStorage.getItem(USER_KEY);
-    if (!userJson) {
-        return null;
-    }
+    if (!userJson) return null;
     try {
         return JSON.parse(userJson);
     } catch {
-        // Ако localStorage е counterfeit-нат, чистим го
         localStorage.removeItem(USER_KEY);
         return null;
     }
 }
+
 /**
- * Проверява дали имаме валиден токен (без да проверява със сървъра).
- *
- * Само наличие на токен – може токенът да е изтекъл, ще се види при
- * първата защитена заявка (която ще върне 401).
- *
+ * Проверява дали имаме токен в localStorage (без проверка със сървъра).
  * @returns {boolean}
  */
 function isLoggedIn() {
     return localStorage.getItem(TOKEN_KEY) !== null;
 }
+
 /**
  * Взима пресни данни за текущия user от сървъра.
- * Полезно за проверка дали токенът все още е валиден.
- *
- * @returns {Promise<object>} – user обект
- * @throws {Error} – при 401 (изтекъл/невалиден токен)
+ * @returns {Promise<object>}
+ * @throws {Error} при 401 (изтекъл/невалиден токен)
  */
 async function fetchCurrentUser() {
     const data = await apiRequest("/api/auth/me");
     return data.user;
 }
 
-
-
 /**
- * Публикува ново ревю за филм. Изисква JWT токен (логнат user).
+ * Публикува ново ревю за филм. Изисква JWT токен.
  *
  * @param {number} movieId
- * @param {string} text – текстът на ревюто (10–5000 символа)
- * @returns {Promise<object>} – новосъздаденото ревю
- * @throws {Error} 400 (невалидни данни) | 401 (не е логнат) | 404 (няма филм)
+ * @param {string} text – 10–5000 символа
+ * @returns {Promise<object>}
+ * @throws {Error} 400 | 401 | 404
  */
 async function postReview(movieId, text) {
     return apiRequest("/api/reviews", {
@@ -219,14 +163,11 @@ async function postReview(movieId, text) {
 /**
  * Регистрира нов user и веднага го логва (запазва токена).
  *
- * Backend-ът връща access_token при register също – удобно е,
- * защото потребителят не трябва да въвежда паролата си втори път.
- *
  * @param {string} username
  * @param {string} email
  * @param {string} password
- * @returns {Promise<object>} – user обект ({id, username, email, role})
- * @throws {Error} – при невалидни данни (400) или conflict (409)
+ * @returns {Promise<object>} {id, username, email, role}
+ * @throws {Error} 400 | 409
  */
 async function register(username, email, password) {
     const data = await apiRequest("/api/auth/register", {
@@ -234,8 +175,6 @@ async function register(username, email, password) {
         body: JSON.stringify({ username, email, password }),
     });
 
-    // Автоматичен login след register – запазваме токена и user данните,
-    // точно както в login() функцията.
     localStorage.setItem(TOKEN_KEY, data.access_token);
     localStorage.setItem(USER_KEY, JSON.stringify(data.user));
 

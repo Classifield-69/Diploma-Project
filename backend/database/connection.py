@@ -1,9 +1,6 @@
-"""
-Модул за управление на връзката с MySQL базата данни.
-
-Този модул предоставя функции за отваряне и затваряне на връзка
-към базата. Конфигурацията се чете от config.py (който я взима от .env).
-"""
+# db/connection.py
+# Управление на връзката с MySQL базата
+# Конфигурацията се чете от config.py (порт, хост, credentials)
 
 import mysql.connector
 from mysql.connector import Error
@@ -17,15 +14,8 @@ import config
 
 
 def get_connection():
-    """
-    Отваря и връща нова връзка към MySQL базата данни.
-    
-    Returns:
-        mysql.connector.connection.MySQLConnection: Активна връзка към базата
-    
-    Raises:
-        Error: При проблем със свързването (грешни credentials, спрян MySQL и т.н.)
-    """
+    # Отваря и връща нова връзка към базата данни
+    # При грешка (неверни credentials, спрян MySQL и др.) вдига Error
     try:
         connection = mysql.connector.connect(
             host=config.DB_HOST,
@@ -43,7 +33,6 @@ def get_connection():
             raise Error("Връзката с базата не е активна след свързване")
             
     except Error as e:
-        # Преопаковаме грешката с по-ясно съобщение
         raise Error(
             f"Неуспешно свързване с MySQL базата '{config.DB_NAME}' "
             f"на {config.DB_HOST}:{config.DB_PORT}. Грешка: {e}"
@@ -51,13 +40,7 @@ def get_connection():
 
 
 def test_connection():
-    """
-    Тестова функция – проверява дали връзката работи и показва информация.
-    Използва се при стартиране на приложението за бърза проверка.
-    
-    Returns:
-        bool: True ако връзката е успешна, False иначе
-    """
+    # Проверява връзката с базата и отпечатва версия и налични таблици
     try:
         connection = get_connection()
         

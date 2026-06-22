@@ -1,19 +1,10 @@
-/**
- * Логика за главната страница (index.html).
- *
- * Какво прави:
- * 1. При зареждане – извиква API-то за филмите
- * 2. За всеки филм създава карта (постер + заглавие)
- * 3. Добавя картите в #movies-grid
- * 4. Хваща грешки и ги показва на потребителя
- */
+/** Логика за главната страница (index.html). Зависи от api.js. */
+
 
 /**
- * Рендерира една карта за филм.
- * Показва само постер и заглавие – оценките са на страницата на филма.
- *
- * @param {object} movie – филмов обект от API-то
- * @returns {string} – HTML низ
+ * Рендерира карта за филм (постер + заглавие).
+ * @param {object} movie
+ * @returns {string} HTML низ
  */
 function renderMovieCard(movie) {
     const posterUrl = staticUrl(movie.poster_url);
@@ -34,17 +25,14 @@ function renderMovieCard(movie) {
     `;
 }
 
-/**
- * Зарежда филмите от API-то и ги показва на страницата.
- */
+/** Зарежда филмите от API-то и ги показва в #movies-grid. */
 async function loadMovies() {
-    const gridElement = document.getElementById("movies-grid");
+    const gridElement  = document.getElementById("movies-grid");
     const countElement = document.getElementById("movies-count");
 
     try {
         const data = await fetchMovies();
 
-        // Показваме броя филми до заглавието "Всички филми"
         if (countElement) {
             countElement.textContent = `${data.count} заглавия`;
         }

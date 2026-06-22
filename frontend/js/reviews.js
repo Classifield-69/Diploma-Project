@@ -1,32 +1,20 @@
-/**
- * Логика за страницата с детайли на филм (movie-details.html).
- *
- * Какво прави:
- * 1. Чете movie ID от URL-а (например /movies/5 → id = 5)
- * 2. Извиква API-то за детайлите на филма
- * 3. Извиква API-то за ревютата на филма
- * 4. Рендерира всичко на страницата
- */
+/** Логика за страницата с детайли на филм (movie-details.html). Зависи от api.js. */
 
 
 /**
- * Извлича movie ID от URL-а.
- * URL pattern: /movies/<id> – например /movies/5
- *
+ * Извлича movie ID от URL-а (/movies/<id>).
  * @returns {number|null}
  */
 function getMovieIdFromUrl() {
     const parts = window.location.pathname.split("/");
-    const idString = parts[parts.length - 1];
-    const id = parseInt(idString, 10);
+    const id = parseInt(parts[parts.length - 1], 10);
     return Number.isNaN(id) ? null : id;
 }
 
 /**
- * Форматира ML оценка в четим вид.
- *
+ * Форматира ML оценка — връща null ако стойността липсва.
  * @param {number|null} value
- * @returns {string} "4.56 / 5.0" или null ако не е анализирано
+ * @returns {string|null} напр. "4.56 / 5.0"
  */
 function formatRating(value) {
     if (value === null || value === undefined) return null;
@@ -34,11 +22,9 @@ function formatRating(value) {
 }
 
 /**
- * Рендерира горната секция на страницата:
- * постер вляво, инфо (заглавие, мета, оценки, analyze) вдясно.
- *
- * @param {object} movie – обект от /api/movies/<id>
- * @returns {string} – HTML низ
+ * Рендерира горната секция: постер вляво, инфо вдясно.
+ * @param {object} movie
+ * @returns {string} HTML низ
  */
 function renderMovieInfo(movie) {
     const posterUrl = staticUrl(movie.poster_url);
@@ -46,7 +32,6 @@ function renderMovieInfo(movie) {
     const actors = movie.actors.join(", ");
     const reviewsCount = movie.stats.reviews_count;
 
-    // ML оценки — ако са null показваме "pending" хапче
     const lstmRating   = formatRating(movie.stats.avg_lstm_prediction);
     const bilstmRating = formatRating(movie.stats.avg_bilstm_prediction);
 
@@ -58,7 +43,6 @@ function renderMovieInfo(movie) {
         ? `<span class="score-pill score-pill--bilstm">BiLSTM: ${bilstmRating}</span>`
         : `<span class="score-pill score-pill--pending">BiLSTM: Не е анализирано</span>`;
 
-    // Analyze бутон — само за admin
     const user = getCurrentUser();
     const isAdmin = user && user.role === "admin";
 
@@ -107,7 +91,6 @@ function renderMovieInfo(movie) {
 /**
  * Форматира ISO datetime в български формат.
  * "2026-05-23T14:19:00" → "23.05.2026 г., 14:19"
- *
  * @param {string} isoString
  * @returns {string}
  */
@@ -124,15 +107,13 @@ function formatDate(isoString) {
 
 /**
  * Рендерира едно ревю.
- *
- * @param {object} review – обект от /api/movies/<id>/reviews
- * @returns {string} – HTML низ
+ * @param {object} review
+ * @returns {string} HTML низ
  */
 function renderReview(review) {
     const date     = formatDate(review.created_at);
     const safeText = escapeHtml(review.text);
 
-    // ML тагове — показваме само ако И двете оценки са налични
     const hasPredictions =
         review.lstm_prediction !== null &&
         review.bilstm_prediction !== null;
@@ -160,7 +141,6 @@ function renderReview(review) {
 
 /**
  * Защита срещу XSS — превръща опасни символи в HTML entities.
- *
  * @param {string} text
  * @returns {string}
  */
@@ -171,10 +151,8 @@ function escapeHtml(text) {
 }
 
 /**
- * Рендерира секцията за писане на ревю.
- * - Логнат user → показва форма с textarea и бутон
- * - Гост → линк към /login
- *
+ * Рендерира формата за ревю.
+ * Логнат user → форма; гост → линк към /login.
  * @param {number} movieId
  * @returns {string} HTML низ
  */
@@ -212,22 +190,16 @@ function renderReviewForm(movieId) {
 }
 
 
-/**
- * Инициализира формата за ревю — закача submit и char counter.
- * Извиква се след като формата е рендирана в DOM-а.
- *
- * @param {number} movieId
- */
+/** Закача submit handler и брояч на символи към формата за ревю. */
 function initReviewForm(movieId) {
     const form = document.getElementById("review-form");
-    if (!form) return;  // гост — няма форма
+    if (!form) return;
 
-    const textarea   = document.getElementById("review-text");
-    const charCount  = document.getElementById("review-char-count");
-    const statusEl   = document.getElementById("review-status");
-    const submitBtn  = form.querySelector("button[type='submit']");
+    const textarea  = document.getElementById("review-text");
+    const charCount = document.getElementById("review-char-count");
+    const statusEl  = document.getElementById("review-status");
+    const submitBtn = form.querySelector("button[type='submit']");
 
-    // Брояч на символи
     textarea.addEventListener("input", () => {
         charCount.textContent = `${textarea.value.length} / 5000`;
     });
@@ -248,7 +220,6 @@ function initReviewForm(movieId) {
 
         try {
             await postReview(movieId, text);
-            // Reload-ваме страницата за да се покаже новото ревю
             window.location.reload();
         } catch (error) {
             console.error("Грешка при публикуване:", error);
@@ -260,9 +231,7 @@ function initReviewForm(movieId) {
 }
 
 
-/**
- * Главна функция — зарежда детайлите и ревютата паралелно.
- */
+/** Зарежда детайлите и ревютата паралелно и рендерира страницата. */
 async function loadMovieDetailsPage() {
     const movieId        = getMovieIdFromUrl();
     const statusEl       = document.getElementById("status");
@@ -279,16 +248,13 @@ async function loadMovieDetailsPage() {
     try {
         statusEl.textContent = "Зареждане...";
 
-        // Двете заявки тръгват паралелно
         const [movieData, reviewsData] = await Promise.all([
             fetchMovieById(movieId),
             fetchMovieReviews(movieId),
         ]);
 
-        // Рендерираме детайлите
         movieInfoEl.innerHTML = renderMovieInfo(movieData.movie);
 
-        // Рендерираме ревютата
         const count = reviewsData.count;
         reviewsHeading.innerHTML = `
             <span class="section-title">Ревюта</span>
@@ -296,7 +262,6 @@ async function loadMovieDetailsPage() {
         `;
         reviewsHeading.style.display = "";
 
-        // Рендерираме формата за ревю (логнат → форма, гост → линк)
         const formContainer = document.getElementById("review-form-container");
         if (formContainer) {
             formContainer.innerHTML = renderReviewForm(movieId);
@@ -307,7 +272,6 @@ async function loadMovieDetailsPage() {
             ? reviewsData.reviews.map(renderReview).join("")
             : `<p class="reviews-empty">Все още няма ревюта за този филм.</p>`;
 
-        // Скриваме статус съобщението
         statusEl.style.display = "none";
 
     } catch (error) {
