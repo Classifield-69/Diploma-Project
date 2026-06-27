@@ -1,16 +1,5 @@
-"""
-seed_reviews_v2.py — Добавя кратки ревюта за 14-те филма без ревюта.
-
-Филми 1, 14, 15 се пропускат — вече имат дълги ревюта (контролна група
-за експеримента в Глава V).
-
-Генерира:
-- 10 кратки ревюта (5–15 думи) за всеки от останалите 14 филма
-- Общо: ~140 ревюта
-
-Дължината е умишлено в рамките на P95=19 токена от тренировъчния dataset,
-за да се тества модела в неговия оптимален диапазон.
-"""
+# seed_reviews_v2.py — генерира 140 кратки ревюта (5–15 думи) за 14 филма.
+# Филми 1, 14, 15 се пропускат — вече имат дълги ревюта (контролна група).
 
 import os
 import json
@@ -22,34 +11,15 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
-# ================================
-# Конфигурация
-# ================================
-
 REVIEWS_PER_MOVIE = 10
+SKIP_MOVIE_IDS    = {1, 14, 15}
 
-# Тези филми вече имат ревюта — НЕ ги пипаме
-SKIP_MOVIE_IDS = {1, 14, 15}
+SENTIMENT_WEIGHTS = {"positive": 0.45, "negative": 0.30, "neutral": 0.25}
+SENTIMENT_RANGES  = {"positive": (70, 100), "negative": (0, 30), "neutral": (40, 60)}
+STYLES            = ["formal", "informal", "casual_with_typos", "short_and_punchy"]
 
-# Sentiment разпределение
-SENTIMENT_WEIGHTS = {
-    "positive": 0.45,
-    "negative": 0.30,
-    "neutral":  0.25,
-}
-
-SENTIMENT_RANGES = {
-    "positive": (70, 100),
-    "negative": (0, 30),
-    "neutral":  (40, 60),
-}
-
-STYLES = ["formal", "informal", "casual_with_typos", "short_and_punchy"]
-
-# Само кратки — в рамките на P95=19 токена от training data
-LENGTH_OPTIONS = [
-    {"name": "кратко", "words": (5, 15)},
-]
+# Само кратки ревюта — в рамките на P95=19 токена от тренировъчния dataset
+LENGTH_OPTIONS = [{"name": "кратко", "words": (5, 15)}]
 
 client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
 
@@ -61,10 +31,6 @@ DB_CONFIG = {
     "database": os.getenv("DB_NAME"),
 }
 
-
-# ================================
-# Помощни функции
-# ================================
 
 def get_db_connection():
     return mysql.connector.connect(**DB_CONFIG)
@@ -89,8 +55,7 @@ def choose_sentiment() -> str:
         return "positive"
     elif rand < SENTIMENT_WEIGHTS["positive"] + SENTIMENT_WEIGHTS["negative"]:
         return "negative"
-    else:
-        return "neutral"
+    return "neutral"
 
 
 def build_prompt(movie: dict, sentiment_category: str, style: str) -> str:
@@ -100,10 +65,10 @@ def build_prompt(movie: dict, sentiment_category: str, style: str) -> str:
         "neutral":  "НЕУТРАЛНО (смесени чувства)",
     }
     style_descriptions = {
-        "formal":             "формален език, кратък и точен",
-        "informal":           "неформален разговорен стил",
-        "casual_with_typos":  "небрежен стил с някоя правописна грешка",
-        "short_and_punchy":   "директен стил, без излишни думи",
+        "formal":            "формален език, кратък и точен",
+        "informal":          "неформален разговорен стил",
+        "casual_with_typos": "небрежен стил с някоя правописна грешка",
+        "short_and_punchy":  "директен стил, без излишни думи",
     }
     sentiment_range = SENTIMENT_RANGES[sentiment_category]
 
@@ -112,8 +77,8 @@ def build_prompt(movie: dict, sentiment_category: str, style: str) -> str:
 Изисквания:
 - Sentiment: {sentiment_descriptions[sentiment_category]}
 - Стил: {style_descriptions[style]}
-- Дължина: между 5 и 15 думи (ЗАДЪЛЖИТЕЛНО — не повече!)
-- Звучи като реален човек, не като AI
+- Дължина: между 5 и 15 думи (ЗАДЪЛЖИТЕЛНО)
+- Звучи като реален човек
 
 Върни САМО валиден JSON:
 {{
@@ -123,6 +88,7 @@ def build_prompt(movie: dict, sentiment_category: str, style: str) -> str:
 
 
 def generate_review(movie: dict, sentiment_category: str) -> dict:
+    """Генерира едно кратко ревю. Връща {text, true_sentiment}."""
     style  = random.choice(STYLES)
     prompt = build_prompt(movie, sentiment_category, style)
 
@@ -137,7 +103,6 @@ def generate_review(movie: dict, sentiment_category: str) -> dict:
     )
 
     parsed = json.loads(response.choices[0].message.content)
-
     if "text" not in parsed or "true_sentiment" not in parsed:
         raise ValueError(f"Неочакван формат: {parsed}")
 
@@ -148,15 +113,10 @@ def generate_review(movie: dict, sentiment_category: str) -> dict:
 
 def insert_review(cursor, user_id: int, movie_id: int, text: str, true_sentiment: float):
     cursor.execute(
-        """INSERT INTO reviews (user_id, movie_id, text, true_sentiment, lstm_prediction, bilstm_prediction)
-           VALUES (%s, %s, %s, %s, NULL, NULL)""",
-        (user_id, movie_id, text, true_sentiment),
+        "INSERT INTO reviews (user_id, movie_id, text, true_sentiment, lstm_prediction, bilstm_prediction) VALUES (%s, %s, %s, %s, NULL, NULL)",
+        (user_id, movie_id, text, true_sentiment)
     )
 
-
-# ================================
-# Главна логика
-# ================================
 
 def seed_short_reviews():
     print("🔌 Свързвам се с MySQL...")
@@ -164,13 +124,10 @@ def seed_short_reviews():
     cursor = conn.cursor()
 
     try:
-        # Показваме текущото състояние
         cursor.execute("SELECT COUNT(*) FROM reviews")
-        existing = cursor.fetchone()[0]
-        print(f"ℹ️  Текущо ревюта в базата: {existing} (запазват се)")
+        print(f"ℹ️  Текущо ревюта в базата: {cursor.fetchone()[0]} (запазват се)")
 
-        # Извличаме данни
-        movies = fetch_movies(cursor)
+        movies        = fetch_movies(cursor)
         target_movies = [m for m in movies if m["id"] not in SKIP_MOVIE_IDS]
         print(f"🎬 Филми за генериране: {len(target_movies)} (пропускам {SKIP_MOVIE_IDS})")
 
@@ -180,17 +137,15 @@ def seed_short_reviews():
             return
         print(f"👥 Потребители: {len(users)}")
 
-        # Строим задачите
         tasks = []
         for movie in target_movies:
             for _ in range(REVIEWS_PER_MOVIE):
-                user = random.choice(users)
+                user      = random.choice(users)
                 sentiment = choose_sentiment()
                 tasks.append((user["id"], movie["id"], movie, sentiment))
 
         total = len(tasks)
-        print(f"\n🎯 Ревюта за генериране: {total}")
-        print(f"⏱️  Очаквано време: ~{total // 60 + 1} минути\n")
+        print(f"\n🎯 Ревюта за генериране: {total} (~{total // 60 + 1} мин)\n")
 
         sentiment_counts = {"positive": 0, "negative": 0, "neutral": 0}
         inserted = 0
@@ -204,7 +159,7 @@ def seed_short_reviews():
                 sentiment_counts[sentiment_cat] += 1
                 inserted += 1
 
-                emoji = {"positive": "😊", "negative": "😞", "neutral": "😐"}[sentiment_cat]
+                emoji   = {"positive": "😊", "negative": "😞", "neutral": "😐"}[sentiment_cat]
                 preview = review_data["text"][:70].replace("\n", " ")
                 print(f"  [{i:3d}/{total}] {emoji} {sentiment_cat:8s} ({review_data['true_sentiment']:5.1f}) → {movie['title'][:25]:25s} | {preview}")
 
@@ -216,24 +171,19 @@ def seed_short_reviews():
             except Exception as e:
                 failed += 1
                 print(f"  [{i:3d}/{total}] ❌ ГРЕШКА: {e}")
-                continue
 
         conn.commit()
 
-        # Финално резюме
         cursor.execute("SELECT COUNT(*) FROM reviews")
         total_in_db = cursor.fetchone()[0]
 
         print("\n" + "=" * 60)
         print("✅ ГОТОВО!")
         print("=" * 60)
-        print(f"  📊 Общо ревюта в базата: {total_in_db}")
-        print(f"  ✅ Добавени сега:         {inserted}")
-        if failed:
-            print(f"  ❌ Неуспешни:            {failed}")
+        print(f"  📊 Общо ревюта в базата: {total_in_db} | Добавени: {inserted}" + (f" | Неуспешни: {failed}" if failed else ""))
         print(f"\n  Sentiment разпределение:")
         for sent, count in sentiment_counts.items():
-            pct = (count / inserted * 100) if inserted else 0
+            pct   = (count / inserted * 100) if inserted else 0
             emoji = {"positive": "😊", "negative": "😞", "neutral": "😐"}[sent]
             print(f"    {emoji} {sent:10s}: {count:3d} ({pct:5.1f}%)")
         print("=" * 60)
