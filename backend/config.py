@@ -14,9 +14,7 @@ from dotenv import load_dotenv
 load_dotenv()
 
 
-# ============================================================
 # Конфигурация на базата данни
-# ============================================================
 DB_HOST = os.getenv("DB_HOST", "127.0.0.1")
 DB_PORT = int(os.getenv("DB_PORT", 3306))
 DB_USER = os.getenv("DB_USER")
@@ -24,29 +22,19 @@ DB_PASSWORD = os.getenv("DB_PASSWORD")
 DB_NAME = os.getenv("DB_NAME")
 
 
-# ============================================================
 # Конфигурация на Flask приложението
-# ============================================================
 FLASK_HOST = os.getenv("FLASK_HOST", "127.0.0.1")
 FLASK_PORT = int(os.getenv("FLASK_PORT", 5001))
 FLASK_DEBUG = os.getenv("FLASK_DEBUG", "True").lower() == "true"
 
 
-# ============================================================
 # Конфигурация на JWT (за по-късно, когато добавим authentication)
-# ============================================================
 JWT_SECRET_KEY = os.getenv("JWT_SECRET_KEY", "dev-secret-change-in-production")
 JWT_ACCESS_TOKEN_EXPIRES_HOURS = int(os.getenv("JWT_ACCESS_TOKEN_EXPIRES_HOURS", 24))
 
 
-# ============================================================
 # Валидация – проверяваме че критичните променливи са заредени
-# ============================================================
 def validate_config():
-    """
-    Проверява дали всички задължителни променливи са заредени от .env.
-    Извиква се при стартирането на приложението.
-    """
     required = {
         "DB_USER": DB_USER,
         "DB_PASSWORD": DB_PASSWORD,

@@ -24,9 +24,7 @@ from routes.pages import pages_bp
 from routes.analysis import analysis_bp
 
 
-# ============================================================
 # Инициализация на Flask приложението
-# ============================================================
 app = Flask(
     __name__,
     static_folder="../frontend",
@@ -40,9 +38,7 @@ config.validate_config()
 # CORS позволява на frontend (на различен порт) да прави заявки към backend
 CORS(app)
 
-# ============================================================
 # Конфигурация на JWT (JSON Web Tokens)
-# ============================================================
 # JWT_SECRET_KEY се ползва за подписване на токените – без него
 # никой не може да създава или верифицира токени
 app.config["JWT_SECRET_KEY"] = config.JWT_SECRET_KEY
@@ -54,9 +50,7 @@ app.config["JWT_ACCESS_TOKEN_EXPIRES"] = timedelta(hours=config.JWT_ACCESS_TOKEN
 # Инициализираме JWT manager-а – закачваме го към приложението
 jwt = JWTManager(app)
 
-# ============================================================
 # Регистриране на Blueprint-и
-# ============================================================
 # Всеки Blueprint съдържа група от свързани endpoint-и.
 # Тук ги "закачаме" към главното приложение.
 app.register_blueprint(health_bp)
@@ -67,9 +61,7 @@ app.register_blueprint(pages_bp)
 app.register_blueprint(analysis_bp)
 
 
-# ============================================================
 # Стартиране на dev сървъра
-# ============================================================
 if __name__ == "__main__":
     print("=" * 60)
     print("🚀 Стартиране на Movie Reviews Backend")
